@@ -1,3 +1,4 @@
+from datetime import timedelta
 """
 Django settings for mymoney project.
 
@@ -37,10 +38,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
     'transaction',
     'category',
-    # 'budget',
+    'budget',
+    'reminder',
+    'saving',
 ]
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Token access sống trong 60 phút
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Token refresh sống trong 1 ngày
+    'AUTH_HEADER_TYPES': ('Bearer',),               # Header kiểu Bearer
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
