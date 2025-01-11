@@ -9,5 +9,5 @@ class JWTAuth(HttpBearer):
         try:
             access_token = AccessToken(token)
             return access_token
-        except Exception:
+        except Exception as e:
             return None

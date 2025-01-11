@@ -13,3 +13,4 @@ def handle_server_error(request, exc):
 
 api.add_router('/transaction', 'transaction.api.router')
 api.add_router('/auth', 'auth.api.router')
+api.add_router('/category', 'category.api.router')
