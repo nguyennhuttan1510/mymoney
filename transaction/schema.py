@@ -1,4 +1,4 @@
-from typing import Optional, ClassVar
+from typing import Optional
 
 from ninja import Schema, ModelSchema
 

@@ -1,7 +1,9 @@
 from http.client import HTTPException
 
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ninja import Router
+from rest_framework.exceptions import NotFound
 
 from category.models import Category
 from typing import List
@@ -14,7 +16,7 @@ router = Router(tags=['Category'], auth=JWTAuth())
 @router.get("/", response=ResponseSchema[List[CategorySchema]])
 def get_category(request):
     try:
-        categories =  Category.objects.all()
+        categories =  Category.objects.filter(Q(is_default=True) | Q(user__pk=request.user.pk))
         return Response(data=categories, message="Get all categories successfully")
     except Exception as e:
         raise HTTPException(str(e))
@@ -22,10 +24,10 @@ def get_category(request):
 @router.get("/{int:category_id}", response=ResponseSchema[CategorySchema])
 def get_category_by_id(request, category_id:int):
     try:
-        category = Category.objects.get(id=category_id)
+        category = Category.objects.get(Q(id=category_id) & Q(user__pk=request.user.pk))
         return Response(data=category, message="Get category by id successfully")
     except Category.DoesNotExist:
-        raise HTTPException(f"Category with id {category_id} not found")
+        raise NotFound(f"Category with id {category_id} not found")
     except Exception as e:
         raise HTTPException(str(e))
 
@@ -43,10 +45,10 @@ def create_category(request, payload: CategorySchema):
 @router.delete('/{int:category_id}', response=ResponseSchema)
 def delete_category(request, category_id: int):
     try:
-        category = get_object_or_404(id = category_id)
+        category = get_object_or_404(Category, Q(id=category_id) & Q(user__pk=request.user.pk))
         category.delete()
         return Response(message=f"Category with id {category_id} deleted successfully")
     except Category.DoesNotExist:
-        raise HTTPException(f"Category with id {category_id} not found")
+        raise NotFound(f"Category with id {category_id} not found")
     except Exception as e:
         raise HTTPException(str(e))
