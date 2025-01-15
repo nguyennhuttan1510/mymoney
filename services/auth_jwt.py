@@ -1,13 +1,17 @@
 from typing import Optional, Any
 from django.http import HttpRequest
 from ninja.security import HttpBearer
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class JWTAuth(HttpBearer):
     def authenticate(self, request: HttpRequest, token: str) -> Optional[Any]:
+        jwt_auth = JWTAuthentication()
         try:
-            access_token = AccessToken(token)
-            return access_token
+            validated_token = jwt_auth.get_validated_token(token)
+            user = jwt_auth.get_user(validated_token)
+            return user
+
         except Exception as e:
-            return None
+            raise AuthenticationFailed('Invalid token')

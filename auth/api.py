@@ -13,8 +13,8 @@ from services.auth_jwt import JWTAuth
 router = Router(tags=['Authentication'])
 
 @router.post("/login")
-def login_user(request, data: LoginSchema):
-    user = authenticate(username=data.username, password=data.password)
+def login_user(request, payload: LoginSchema):
+    user = authenticate(username=payload.username, password=payload.password)
     if not user:
         raise AuthenticationFailed('Invalid username or password')
     login(request, user)

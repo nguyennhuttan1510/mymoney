@@ -41,6 +41,6 @@ def delete_budget(request, budget_id: int):
     try:
         budget = Budget.objects.get(Q(id=budget_id) & Q(user__pk=request.user.pk))
         budget.delete()
-        return Response(data=budget, message="Delete budget successfully")
+        return Response(message=f"Delete budget {budget_id} successfully")
     except Budget.DoesNotExist:
         raise NotFound(f'Not found budget {budget_id}')

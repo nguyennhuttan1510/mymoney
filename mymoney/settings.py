@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'budget',
     'reminder',
     'saving',
+    'wallet',
+    'report'
 ]
 
 

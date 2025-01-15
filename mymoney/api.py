@@ -11,7 +11,10 @@ def handle_server_error(request, exc):
         return api.create_response(request, {"message": str(exc)}, status=exc.status_code)
     return api.create_response(request, {"message": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-api.add_router('/transaction', 'transaction.api.router')
 api.add_router('/auth', 'auth.api.router')
-api.add_router('/category', 'category.api.router')
+api.add_router('/transaction', 'transaction.api.router')
+api.add_router('/wallet', 'wallet.api.router')
+api.add_router('/report', 'report.api.router')
+api.add_router('/saving', 'saving.api.router')
 api.add_router('/budget', 'budget.api.router')
+api.add_router('/category', 'category.api.router')
