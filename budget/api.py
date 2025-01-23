@@ -17,6 +17,7 @@ def get_budget(request, budget_id:int):
     try:
         budget = Budget.objects.get(Q(id=budget_id) & Q(user__pk=request.user.pk))
         return Response(data=budget, message="Get budget successfully")
+
     except Budget.DoesNotExist:
         raise NotFound(f"Budget with id {budget_id} does not exist")
     except Exception as e:

@@ -11,9 +11,11 @@ class TransactionSchema(ModelSchema):
     category: Optional[CategorySchema] = None
     class Meta:
         model = Transaction
-        fields = ['id', 'transaction_type', 'amount', 'note', 'category', 'transaction_date']
+        fields = ['id', 'transaction_type', 'wallet',  'budget', 'amount', 'note', 'category', 'transaction_date']
 
 class TransactionCreateSchema(ModelSchema):
     class Meta:
         model = Transaction
-        fields = ['id', 'transaction_type', 'wallet', 'amount', 'note', 'category', 'transaction_date']
+        fields = ['transaction_type', 'wallet',  'budget', 'amount', 'note', 'category', 'transaction_date']
+        optional_fields = ['budget']
+

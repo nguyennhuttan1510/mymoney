@@ -37,12 +37,13 @@ class TransactionTestCase(TestCase):
         return {"Authorization": f"Bearer {access_token}"}
 
 
-    def test_create_transaction(self):
+    def test_create_transaction(self, payload_extra={}):
         payload = {
             'amount': 100000,
             'transaction_type': TransactionType.EXPENSE.value,
             'wallet_id': self.wallet.pk,
-            'category_id': 1
+            'category_id': 1,
+            **payload_extra
         }
         response = self.client.post('/', json=payload, headers=self.get_header(self.access_token))
         self.assertEqual(response.status_code, 200)
@@ -89,5 +90,10 @@ class TransactionTestCase(TestCase):
 
         self.assertEqual(wallet.balance, 1000000)
         self.assertEqual(wallet_2.balance, 400000)
+
+
+    # def test_transaction_budget(self):
+    #     self.test_create_transaction({'budget': self.budget.pk, 'amount': 500000})
+
 
 

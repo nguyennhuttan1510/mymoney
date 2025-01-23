@@ -6,6 +6,7 @@ from ninja import Router, NinjaAPI
 from ninja import PatchDict
 from rest_framework.exceptions import NotFound
 
+from budget.models import Budget
 from category.models import Category
 from core.schema.response import ResponseSchema, Response
 from services.auth_jwt import JWTAuth
@@ -22,7 +23,8 @@ def create_transaction(request, payload: TransactionCreateSchema ) -> ResponseSc
             user = getattr(request, 'auth', None)
             category = Category.objects.get(pk=payload.category)
             wallet = Wallet.objects.get(pk=payload.wallet, user=user)
-            transaction_data = {**payload.dict(), "category": category, "wallet": wallet}
+            budget = Budget.objects.get(pk=payload.budget, user=user)
+            transaction_data = {**payload.dict(), "category": category, "wallet": wallet, "budget": budget}
             transaction = Transaction.objects.create(user=user ,**transaction_data)
             return Response(data=transaction, message='Created transaction successfully' )
     except Category.DoesNotExist:

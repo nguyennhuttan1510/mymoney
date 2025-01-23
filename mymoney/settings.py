@@ -1,5 +1,6 @@
 from datetime import timedelta
 import os
+from dotenv import load_dotenv
 """
 Django settings for mymoney project.
 
@@ -13,6 +14,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,7 +31,6 @@ SECRET_KEY = 'django-insecure-%$a$vo**^w*9esu0@65p)kf!r*7($-ei=drffq=8!u$y^7qlft
 DEBUG = True
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
-
 
 # Application definition
 
@@ -138,3 +140,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Hoặc máy chủ email bạn sử dụng
+EMAIL_PORT = 587  # Thông thường dùng 587 cho SMTP
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'nguyentan15102000@gmail.com'  # Email bạn dùng để gửi
+EMAIL_HOST_PASSWORD = 'suxrtjfoyialbtkv'  # Mật khẩu email

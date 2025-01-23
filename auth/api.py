@@ -24,6 +24,7 @@ def login_user(request, payload: LoginSchema):
         "access_token": str(refresh_token.access_token)
     }
 
+
 @router.post("/register", response=ResponseSchema[RegisterResponseSchema])
 def register(request, payload: RegisterSchema):
     existed_user = User.objects.filter(username=payload.username).exists()
@@ -32,6 +33,7 @@ def register(request, payload: RegisterSchema):
 
     user = User.objects.create_user(**payload.dict())
     return Response(message="User created successfully", success=True, data=user)
+
 
 @router.post('/logout', response={200: ResponseSchema}, auth=JWTAuth())
 def logout_user(request):

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from budget.models import Budget
 from category.models import Category
 from core.models.datetime import Datetime
 from utils.common import TransactionType
@@ -16,6 +17,7 @@ class Transaction(Datetime):
     category = models.ForeignKey(Category, blank=True, null=True, on_delete=models.SET_NULL, related_name='transactions')
     user = models.ForeignKey(User, related_name='transactions', on_delete=models.CASCADE)
     wallet = models.ForeignKey(Wallet, related_name='transactions', on_delete=models.CASCADE)
+    budget = models.ForeignKey(Budget, related_name='transactions', on_delete=models.CASCADE, null=True, default=None)
 
     @staticmethod
     def reset_transactions(transaction):
