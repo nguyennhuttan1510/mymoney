@@ -12,18 +12,19 @@ from core.schema.response import ResponseSchema, Response
 from services.auth_jwt import JWTAuth
 from transaction.models import Transaction
 from transaction.schema import TransactionSchema, TransactionCreateSchema
+from utils.query import query_or_not
 from wallet.models import Wallet
 
 router = Router(tags=['Transaction'], auth=JWTAuth())
 
 @router.post("/", response=ResponseSchema[TransactionSchema])
-def create_transaction(request, payload: TransactionCreateSchema ) -> ResponseSchema[TransactionSchema]:
+def create_transaction(request, payload: TransactionCreateSchema ):
     try:
         with transaction_db.atomic():
             user = getattr(request, 'auth', None)
-            category = Category.objects.get(pk=payload.category)
-            wallet = Wallet.objects.get(pk=payload.wallet, user=user)
-            budget = Budget.objects.get(pk=payload.budget, user=user)
+            category = query_or_not(Category, pk=payload.category)
+            wallet = query_or_not(Wallet, pk=payload.wallet, user=user)
+            budget = query_or_not(Budget, pk=payload.budget, user=user)
             transaction_data = {**payload.dict(), "category": category, "wallet": wallet, "budget": budget}
             transaction = Transaction.objects.create(user=user ,**transaction_data)
             return Response(data=transaction, message='Created transaction successfully' )

@@ -30,6 +30,8 @@ SECRET_KEY = 'django-insecure-%$a$vo**^w*9esu0@65p)kf!r*7($-ei=drffq=8!u$y^7qlft
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+AUTH_USER_MODEL='auth.User'
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 # Application definition
