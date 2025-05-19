@@ -28,20 +28,20 @@ class Transaction(Datetime):
         transaction.wallet.save()
 
 
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        if is_new:
-            if self.category.type == TransactionType.INCOME.value:
-                self.wallet.balance += self.amount
-            else:
-                self.wallet.balance -= self.amount
-        else:
-            old_transaction = Transaction.objects.get(pk=self.pk)
-            if old_transaction.amount != self.amount or old_transaction.category.type != self.category.type or old_transaction.wallet != self.wallet:
-                self.reset_transactions(old_transaction)
-
-        self.wallet.save()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     is_new = self.pk is None
+    #     if is_new:
+    #         if self.category.type == TransactionType.INCOME.value:
+    #             self.wallet.balance += self.amount
+    #         else:
+    #             self.wallet.balance -= self.amount
+    #     else:
+    #         old_transaction = Transaction.objects.get(pk=self.pk)
+    #         if old_transaction.amount != self.amount or old_transaction.category.type != self.category.type or old_transaction.wallet != self.wallet:
+    #             self.reset_transactions(old_transaction)
+    #
+    #     self.wallet.save()
+    #     super().save(*args, **kwargs)
 
 
     def delete(self, *args, **kwargs):

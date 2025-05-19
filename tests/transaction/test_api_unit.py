@@ -1,3 +1,5 @@
+from traceback import print_tb
+
 import pytest
 from transaction.models import Transaction
 
@@ -42,7 +44,7 @@ def test_wallet_balance_after_transaction(client, user_admin, login, wallet_admi
 
 
 @pytest.mark.django_db
-def test_wallet_balance_after_transaction(client, user_admin, login, wallet_admin_01):
+def test_wallet_balance_after_edit_transaction(client, user_admin, login, wallet_admin_01):
     auth = login(client, user_admin)
 
     wallet_admin_01.balance = 50000
@@ -54,12 +56,22 @@ def test_wallet_balance_after_transaction(client, user_admin, login, wallet_admi
         "category_id": 1,
         "transaction_date": "2025-04-25T08:32:21.775Z"
     }
-    response = auth('post', '/api/transaction/', data)
+    response_transaction = auth('post', '/api/transaction/', data)
+
+    transaction_id = response_transaction.json()['data']["id"]
+    print('transaction_id', transaction_id)
+
+    data.__setitem__('amount', 20000)
+    print('data', data)
+    response = auth('put', f'/api/transaction/{transaction_id}', data)
+    print('response', response.json()['data'])
 
     wallet_admin_01.refresh_from_db()
 
+    print('wallet_admin_01.balance', wallet_admin_01.balance)
+
     assert response.status_code == 200
-    assert wallet_admin_01.balance == 40000
+    assert wallet_admin_01.balance == 30000
 
 
 @pytest.mark.django_db
@@ -69,6 +81,9 @@ def test_transaction_invalid_wallet_and_category(client, user_admin, login):
     data = {
         "wallet_id": 1,
         "amount": 10000,
+
+
+
         "category_id": instance_not_found,
         "transaction_date": "2025-04-25T08:32:21.775Z"
     }
@@ -76,4 +91,8 @@ def test_transaction_invalid_wallet_and_category(client, user_admin, login):
     print('response', response.json())
 
     assert response.status_code == 404
+
+
+
+
     assert "message" in response.json()

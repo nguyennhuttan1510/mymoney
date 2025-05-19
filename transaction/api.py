@@ -8,6 +8,7 @@ from rest_framework.exceptions import NotFound
 
 from budget.models import Budget
 from category.models import Category
+from core.models.transactions import SpendingTransaction
 from core.schema.response import ResponseSchema, Response
 from services.auth_jwt import JWTAuth
 from transaction.models import Transaction
@@ -23,11 +24,17 @@ def create_transaction(request, payload: TransactionCreateSchema ):
         with transaction_db.atomic():
             user = getattr(request, 'auth', None)
             category = query_or_not(Category, pk=payload.category)
+            if category is None: raise Category.DoesNotExist
             wallet = query_or_not(Wallet, pk=payload.wallet, user=user)
             budget = query_or_not(Budget, pk=payload.budget, user=user)
+
+            transaction = SpendingTransaction()
+
             transaction_data = {**payload.dict(), "category": category, "wallet": wallet, "budget": budget}
-            transaction = Transaction.objects.create(user=user ,**transaction_data)
-            return Response(data=transaction, message='Created transaction successfully' )
+
+            result = transaction.pay(Transaction(user=user, **transaction_data))
+
+            return Response(data=result, message='Created transaction successfully' )
     except Category.DoesNotExist:
         raise NotFound(f"Category with id {payload.category} does not exist")
     except Wallet.DoesNotExist:
@@ -51,7 +58,7 @@ def get_transaction(request, transaction_id: int):
 @router.put("/{int:transaction_id}", response=ResponseSchema[TransactionSchema])
 def update_transaction(request, transaction_id: int, item: PatchDict[TransactionCreateSchema]):
     try:
-        transaction = get_object_or_404(Transaction, id=transaction_id)
+        transaction_instance = get_object_or_404(Transaction, id=transaction_id)
         for key, value in item.items():
             if value is not None:
                 if key == 'category':
@@ -60,10 +67,14 @@ def update_transaction(request, transaction_id: int, item: PatchDict[Transaction
                 if key == 'wallet':
                     wallet = Wallet.objects.get(pk=value)
                     value = wallet
-                setattr(transaction, key, value)
+                setattr(transaction_instance, key, value)
 
-        transaction.save()
-        return Response(data=transaction, message=f"Updated transactions {transaction.pk} of user {request.user.pk} successfully" )
+        transaction = SpendingTransaction()
+        transaction.pay(transaction_instance)
+
+
+
+        return Response(data=transaction_instance, message=f"Updated transactions {transaction_instance.pk} of user {request.user.pk} successfully" )
 
     except Transaction.DoesNotExist:
         return Response(message=f"Transaction with id {id} does not exist" )
