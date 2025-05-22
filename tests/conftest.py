@@ -2,14 +2,17 @@ from tokenize import generate_tokens
 
 import pytest
 from django.contrib.auth.models import User
+from django.db import connection
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from category.models import Category
 from mymoney.api import api
 from ninja.testing import TestClient
 
+from mymoney.settings import BASE_DIR
 from tests.helper import auth_client
 from wallet.models import Wallet
+import os
 
 # FACTORY
 
@@ -48,13 +51,23 @@ def login(access_token_factory):
 # ======================================= INIT DATABASE =======================================
 
 # CATEGORY
-@pytest.fixture(scope='module')
-def default_categories():
-    return Category.objects.bulk_create([
-        Category(name='Fee', category_type='EXPENSE'),
-        Category(name='Bill', category_type='EXPENSE'),
-        Category(name='Gas', category_type='EXPENSE'),
-    ])
+@pytest.fixture(autouse=True, scope='session')
+def load_categories_from_sql(django_db_setup, django_db_blocker):
+    sql_path = os.path.join(os.path.dirname(__file__), 'sql', 'category.sql')
+    print('sql_path', sql_path)
+    with open(sql_path, 'r', encoding="utf-8") as file:
+        sql = file.read()
+
+    statements = [s.strip() for s in sql.split(";") if s.strip()]
+
+    with django_db_blocker.unblock():
+        with connection.cursor() as cursor:
+            for statement in statements:
+                try:
+                    cursor.execute(statement)
+                except Exception as e:
+                    print(f"[WARN] Skipped SQL statement: {statement[:50]}... → {e}")
+
 
 
 # USER

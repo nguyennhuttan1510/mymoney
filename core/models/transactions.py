@@ -20,8 +20,6 @@ class Transaction(ABC):
         pass
 
 
-
-
 class SpendingTransaction(Transaction):
     def pay(self, transaction_instance: TransactionModel) -> TransactionModel:
         try:
