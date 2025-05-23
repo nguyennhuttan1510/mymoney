@@ -1,7 +1,10 @@
 from traceback import print_tb
 
 import pytest
+
+from category.models import Category
 from transaction.models import Transaction
+from wallet.models import Wallet
 
 
 @pytest.mark.django_db
@@ -43,16 +46,26 @@ def test_wallet_balance_after_transaction(client, user_admin, login, wallet_admi
     assert wallet_admin_01.balance == 40000
 
 
-@pytest.mark.parametrize('category_id, amount, category_id_edit, amount_edit, expected', [
-    (3, 10000, 3, 20000, 30000),
-    (3, 50000, 3, 10000, 40000),
-    (3, 50000, 15, 10000, 60000),
+@pytest.mark.parametrize('wallet, category_id, amount, wallet_edit, category_id_edit, amount_edit, wallet_expected, wallet_2_expected', [
+    ('wallet_admin_01', 3, 10000, 'wallet_admin_01', 3, 20000, 30000, 50000),
+    ('wallet_admin_01', 3, 50000, 'wallet_admin_01', 3, 10000, 40000, 50000),
+    ('wallet_admin_01',3, 50000, 'wallet_admin_01', 15, 10000, 60000, 50000),
+    ('wallet_admin_01',3, 50000, 'wallet_admin_02', 15, 10000, 50000, 60000),
 ])
-def test_wallet_balance_after_edit_transaction(category_id, amount, category_id_edit, amount_edit, expected, client, user_admin, login, wallet_factory, admin_user):
+def test_wallet_balance_after_edit_transaction(wallet, category_id, amount, wallet_edit, category_id_edit, amount_edit, wallet_expected, wallet_2_expected, client, user_admin, login, wallet_admin_01, wallet_admin_02):
     balance_provide = 50000
+    wallet_admin_01.balance = balance_provide
+    wallet_admin_02.balance = balance_provide
+
+    wallet_admin_01.save()
+    wallet_admin_02.save()
+
     auth = login(client, user_admin)
 
-    wallet = wallet_factory(name='wallet_01', balance=balance_provide, user=admin_user)
+    wallet = Wallet.objects.get(name=wallet)
+    wallet_2 = Wallet.objects.get(name=wallet_edit)
+
+    print('wallet begin', wallet.balance)
 
     data = {
         "wallet_id": wallet.pk,
@@ -62,11 +75,15 @@ def test_wallet_balance_after_edit_transaction(category_id, amount, category_id_
     }
     response_transaction = auth('post', '/api/transaction/', data)
 
+    wallet.refresh_from_db()
+
+    print('wallet before', wallet.balance)
+
     transaction_id = response_transaction.json()['data']["id"]
 
 # DATA UPDATE
     data = {
-        **data,
+        "wallet": wallet_2.pk,
         "amount": amount_edit,
         "category_id": category_id_edit
     }
@@ -76,9 +93,13 @@ def test_wallet_balance_after_edit_transaction(category_id, amount, category_id_
     print('response', response.json()['data'])
 
     wallet.refresh_from_db()
+    wallet_2.refresh_from_db()
+
+    print('wallet after', wallet.balance)
 
     assert response.status_code == 200
-    assert wallet.balance == expected
+    assert wallet.balance == wallet_expected
+    # assert wallet_2.balance == wallet_2_expected
 
 
 @pytest.mark.django_db
