@@ -51,6 +51,7 @@ def test_wallet_balance_after_transaction(client, user_admin, login, wallet_admi
     ('wallet_admin_01', 3, 50000, 'wallet_admin_01', 3, 10000, 40000, 50000),
     ('wallet_admin_01',3, 50000, 'wallet_admin_01', 15, 10000, 60000, 50000),
     ('wallet_admin_01',3, 50000, 'wallet_admin_02', 15, 10000, 50000, 60000),
+    ('wallet_admin_01',3, 2000, 'wallet_admin_02', 15, 30000, 50000, 80000),
 ])
 def test_wallet_balance_after_edit_transaction(wallet, category_id, amount, wallet_edit, category_id_edit, amount_edit, wallet_expected, wallet_2_expected, client, user_admin, login, wallet_admin_01, wallet_admin_02):
     balance_provide = 50000
@@ -118,6 +119,24 @@ def test_transaction_invalid_wallet_and_category(client, user_admin, login):
     assert response.status_code == 404
 
 
+@pytest.mark.django_db
+def test_transaction_removed(client, user, login, wallet_user_01):
+    auth = login(client, user)
+    data = {
+        "wallet_id": wallet_user_01.pk,
+        "amount": 10000,
+        "category_id": 3,
+    }
+    response_create_transaction = auth('post', '/api/transaction/', data)
 
+    print('response_create_transaction', response_create_transaction.json())
 
-    assert "message" in response.json()
+    transaction_id = response_create_transaction.json()['data']["id"]
+
+    print('transaction_id', transaction_id)
+
+    response_delete = auth('delete', f'/api/transaction/{transaction_id}', None)
+
+    print('response', response_delete.json())
+
+    assert response_delete.status_code == 200

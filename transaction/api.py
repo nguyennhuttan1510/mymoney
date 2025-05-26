@@ -1,6 +1,7 @@
 from typing import List
 
 from django.db import transaction as transaction_db
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router, NinjaAPI
 from ninja import PatchDict
@@ -28,11 +29,10 @@ def create_transaction(request, payload: TransactionCreateSchema ):
             wallet = query_or_not(Wallet, pk=payload.wallet, user=user)
             budget = query_or_not(Budget, pk=payload.budget, user=user)
 
-            transaction = SpendingTransaction()
-
             transaction_data = {**payload.dict(), "category": category, "wallet": wallet, "budget": budget}
+            transaction = SpendingTransaction(Transaction(user=user, **transaction_data))
 
-            result = transaction.pay(Transaction(user=user, **transaction_data))
+            result = transaction.pay()
 
             return Response(data=result, message='Created transaction successfully' )
     except Category.DoesNotExist:
@@ -51,8 +51,15 @@ def get_all_transaction(request):
 
 @router.get("/{int:transaction_id}", response=ResponseSchema[TransactionSchema])
 def get_transaction(request, transaction_id: int):
-    transaction = get_object_or_404(Transaction, id=transaction_id)
-    return Response(data=transaction, message=f"Get transactions {transaction.pk} successfully" )
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+        print('transaction', transaction)
+        if transaction is None:
+            raise HttpResponseBadRequest()
+        return Response(data=transaction, message=f"Get transactions {transaction.pk} successfully" )
+    except Exception as e:
+        print('e', e)
+        return Response(message=f"Transaction with id {transaction_id} does not exist")
 
 
 @router.put("/{int:transaction_id}", response=ResponseSchema[TransactionSchema])
@@ -69,8 +76,8 @@ def update_transaction(request, transaction_id: int, item: PatchDict[Transaction
                     value = wallet
                 setattr(transaction_instance, key, value)
 
-        transaction = SpendingTransaction()
-        transaction.pay(transaction_instance)
+        transaction = SpendingTransaction(transaction_instance)
+        transaction.pay()
 
 
 
@@ -83,8 +90,8 @@ def update_transaction(request, transaction_id: int, item: PatchDict[Transaction
 @router.delete("/{int:transaction_id}", response=ResponseSchema)
 def delete_transaction(request, transaction_id: int):
     try:
-        transaction = Transaction.objects.get(id=transaction_id, user=request.user)
-        transaction.delete()
+        transaction_instance = Transaction.objects.get(id=transaction_id, user=request.user)
+        transaction_instance.delete()
         return Response(message=f"Transaction {transaction_id} deleted", success=True)
     except Transaction.DoesNotExist:
         raise NotFound('Transaction not found')

@@ -6,7 +6,7 @@ from rest_framework.exceptions import AuthenticationFailed, NotFound, Validation
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from auth.schema import LoginSchema, RegisterSchema, RegisterResponseSchema
-from core.exceptions.api_exception import HttpBadRequestException
+from core.api_response.api_exception import HttpBadRequestException
 from core.schema.response import ResponseSchema, Response
 from services.auth_jwt import JWTAuth
 
