@@ -8,7 +8,7 @@ from rest_framework.exceptions import NotFound
 from category.models import Category
 from typing import List
 from category.schema import CategorySchema
-from core.schema.response import Response, ResponseSchema
+from core.schema.response import BaseResponse, ResponseSchema
 from services.auth_jwt import JWTAuth
 
 router = Router(tags=['Category'], auth=JWTAuth())
@@ -17,7 +17,7 @@ router = Router(tags=['Category'], auth=JWTAuth())
 def get_category(request):
     try:
         categories =  Category.objects.filter(Q(is_default=True) | Q(user__pk=request.user.pk))
-        return Response(data=categories, message="Get all categories successfully")
+        return BaseResponse(data=categories, message="Get all categories successfully")
     except Exception as e:
         raise HTTPException(str(e))
 
@@ -25,7 +25,7 @@ def get_category(request):
 def get_category_by_id(request, category_id:int):
     try:
         category = Category.objects.get(Q(id=category_id) & Q(user__pk=request.user.pk))
-        return Response(data=category, message="Get category by id successfully")
+        return BaseResponse(data=category, message="Get category by id successfully")
     except Category.DoesNotExist:
         raise NotFound(f"Category with id {category_id} not found")
     except Exception as e:
@@ -38,7 +38,7 @@ def create_category(request, payload: CategorySchema):
         category = Category.objects.create(**payload.dict())
         category.save()
         category.user.add(user)
-        return Response(data=category, message="Category created successfully")
+        return BaseResponse(data=category, message="Category created successfully")
     except Exception as e:
         raise HTTPException(str(e))
 
@@ -47,7 +47,7 @@ def delete_category(request, category_id: int):
     try:
         category = get_object_or_404(Category, Q(id=category_id) & Q(user__pk=request.user.pk))
         category.delete()
-        return Response(message=f"Category with id {category_id} deleted successfully")
+        return BaseResponse(message=f"Category with id {category_id} deleted successfully")
     except Category.DoesNotExist:
         raise NotFound(f"Category with id {category_id} not found")
     except Exception as e:

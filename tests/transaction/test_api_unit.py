@@ -20,7 +20,7 @@ def test_create_transaction_unit(client, user_admin, login, wallet_admin_01):
 
     assert response.status_code == 200
     assert response.json()['data']["wallet"] == 1
-    assert response.json()['data']["amount"] == "10000"
+    assert response.json()['data']["amount"] == 10000
     assert Transaction.objects.count() == 1
 
 
@@ -84,13 +84,14 @@ def test_wallet_balance_after_edit_transaction(wallet, category_id, amount, wall
 
 # DATA UPDATE
     data = {
-        "wallet": wallet_2.pk,
+        "wallet_id": wallet_2.pk,
         "amount": amount_edit,
         "category_id": category_id_edit
     }
 
     print('data', data)
     response = auth('put', f'/api/transaction/{transaction_id}', data)
+    print('response', response.json())
     print('response', response.json()['data'])
 
     wallet.refresh_from_db()

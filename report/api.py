@@ -1,7 +1,7 @@
 from ninja import Router
 
 from budget.models import Budget
-from core.schema.response import ResponseSchema, Response
+from core.schema.response import ResponseSchema, BaseResponse
 from report.schema import ReportWalletTransaction, ResponseBudgetTransaction
 from services.auth_jwt import JWTAuth
 from wallet.models import Wallet
@@ -33,4 +33,4 @@ def get_budget_transactions(request, budget_id: int):
         "percentage_spent": (sum_transactions / budget.amount) * 100 if budget.amount > 0 else 0,
         "percentage_remaining": ((budget.amount - sum_transactions) / budget.amount) * 100 if budget.amount > 0 else 100,
     }
-    return Response(data=budget_transactions, message="Success")
+    return BaseResponse(data=budget_transactions, message="Success")

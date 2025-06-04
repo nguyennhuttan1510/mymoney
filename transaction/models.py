@@ -20,7 +20,7 @@ class Transaction(Datetime):
 
     @staticmethod
     def reset_transactions(transaction):
-        if transaction.category.type == TransactionType.INCOME.value:
+        if transaction.category_id.type == TransactionType.INCOME.value:
             transaction.wallet.balance -= transaction.amount
         else:
             transaction.wallet.balance += transaction.amount

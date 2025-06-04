@@ -39,7 +39,7 @@ class SpendingTransaction(Transaction):
 
                 else:
                     old_transaction = TransactionModel.objects.get(pk=self.transaction.pk)
-                    if old_transaction.amount != self.transaction.amount or old_transaction.category.type != self.transaction.category.type or old_transaction.wallet != self.transaction.wallet:
+                    if old_transaction.amount != self.transaction.amount or old_transaction.category_id.type != self.transaction.category.type or old_transaction.wallet != self.transaction.wallet:
                         self.transaction.reset_transactions(old_transaction)
                         self.change_balance(self.transaction)
 

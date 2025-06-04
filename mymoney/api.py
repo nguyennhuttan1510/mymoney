@@ -1,15 +1,13 @@
 from ninja import NinjaAPI
-from ninja.errors import HttpError
-from rest_framework import status
-from rest_framework.exceptions import APIException
+from ninja.errors import ValidationError
+
+from core.exceptions.exception_handler import exception_handler, validation_exception_handler
 
 api = NinjaAPI()
 
-@api.exception_handler(Exception)
-def handle_server_error(request, exc):
-    if isinstance(exc, APIException):
-        return api.create_response(request, {"message": str(exc)}, status=exc.status_code)
-    return api.create_response(request, {"message": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+api.add_exception_handler(Exception, exception_handler)
+api.add_exception_handler(ValidationError, validation_exception_handler)
+
 
 api.add_router('/auth', 'auth.api.router')
 api.add_router('/transaction', 'transaction.api.router')

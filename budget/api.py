@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound
 from budget.models import Budget
 from budget.schema import BudgetSchema, BudgetCreateSchema
 from category.models import Category
-from core.schema.response import ResponseSchema, Response
+from core.schema.response import ResponseSchema, BaseResponse
 from services.auth_jwt import JWTAuth
 
 router = Router(tags=['Budget'], auth=JWTAuth())
@@ -16,7 +16,7 @@ router = Router(tags=['Budget'], auth=JWTAuth())
 def get_budget(request, budget_id:int):
     try:
         budget = Budget.objects.get(Q(id=budget_id) & Q(user__pk=request.user.pk))
-        return Response(data=budget, message="Get budget successfully")
+        return BaseResponse(data=budget, message="Get budget successfully")
 
     except Budget.DoesNotExist:
         raise NotFound(f"Budget with id {budget_id} does not exist")
@@ -30,7 +30,7 @@ def create_budget(request, payload: BudgetCreateSchema):
         category = Category.objects.get(id=payload.category)
         budget_data = {**payload.dict(), "category": category}
         budget = Budget.objects.create(user=request.user, **budget_data)
-        return Response(data=budget, message="Create budget successfully")
+        return BaseResponse(data=budget, message="Create budget successfully")
     except Category.DoesNotExist:
         raise NotFound("Category not found")
     except Exception as e:
@@ -42,6 +42,6 @@ def delete_budget(request, budget_id: int):
     try:
         budget = Budget.objects.get(Q(id=budget_id) & Q(user__pk=request.user.pk))
         budget.delete()
-        return Response(message=f"Delete budget {budget_id} successfully")
+        return BaseResponse(message=f"Delete budget {budget_id} successfully")
     except Budget.DoesNotExist:
         raise NotFound(f'Not found budget {budget_id}')
