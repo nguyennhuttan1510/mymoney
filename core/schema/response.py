@@ -12,15 +12,13 @@ class ResponseSchema(Schema, Generic[T]):
     success: bool = True
 
 
-class BaseResponse(ABC):
-    http_status: int
-    success: bool
+class BaseResponse:
+    http_status: int = 200
+    success: bool = True
     message: Optional[str] = None
 
-    def __init__(self, message: str = None, data: Optional[Any] = None):
-        self.data = data
-        if message:
-            self.message = message
+    def __new__(cls, message: str = None, data: Optional[Any] = None, success=True):
+        return cls.http_status, ResponseSchema(data=data, message=message or cls.message, success=success or cls.success)
 
     def to_response(self):
         return self.http_status, self

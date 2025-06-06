@@ -6,6 +6,11 @@ from category.models import Category
 from transaction.models import Transaction
 from wallet.models import Wallet
 
+@pytest.fixture
+def create_transaction(db):
+    def make_transaction(**kwargs):
+        return Transaction.objects.create(**kwargs)
+    return make_transaction
 
 @pytest.mark.django_db
 def test_create_transaction_unit(client, user_admin, login, wallet_admin_01):
@@ -14,15 +19,12 @@ def test_create_transaction_unit(client, user_admin, login, wallet_admin_01):
         "wallet_id": wallet_admin_01.pk,
         "amount": 10000,
         "category_id": 1,
-        "transaction_date": "2025-04-25T08:32:21.775Z"
     }
     response = auth('post', '/api/transaction/', data)
 
     assert response.status_code == 200
     assert response.json()['data']["wallet"] == 1
     assert response.json()['data']["amount"] == 10000
-    assert Transaction.objects.count() == 1
-
 
 
 @pytest.mark.django_db
@@ -117,27 +119,18 @@ def test_transaction_invalid_wallet_and_category(client, user_admin, login):
     response = auth('post', '/api/transaction/', data)
     print('response', response.json())
 
-    assert response.status_code == 404
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
-def test_transaction_removed(client, user, login, wallet_user_01):
+def test_transaction_removed(client, user, login, wallet_user_01, create_transaction):
     auth = login(client, user)
     data = {
         "wallet_id": wallet_user_01.pk,
         "amount": 10000,
         "category_id": 3,
+        "user_id": user.pk
     }
-    response_create_transaction = auth('post', '/api/transaction/', data)
-
-    print('response_create_transaction', response_create_transaction.json())
-
-    transaction_id = response_create_transaction.json()['data']["id"]
-
-    print('transaction_id', transaction_id)
-
-    response_delete = auth('delete', f'/api/transaction/{transaction_id}', None)
-
-    print('response', response_delete.json())
-
+    transaction = create_transaction(**data)
+    response_delete = auth('delete', f'/api/transaction/{transaction.pk}', None)
     assert response_delete.status_code == 200

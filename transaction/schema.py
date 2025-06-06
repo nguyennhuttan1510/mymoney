@@ -1,7 +1,5 @@
 from typing import Optional
-
 from ninja import ModelSchema
-from pydantic import Field
 
 from transaction.models import Transaction
 
