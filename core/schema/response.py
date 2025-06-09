@@ -18,10 +18,10 @@ class BaseResponse:
     message: Optional[str] = None
 
     def __new__(cls, message: str = None, data: Optional[Any] = None, success=True):
+        if cls.http_status is None:
+            raise NotImplemented
         return cls.http_status, ResponseSchema(data=data, message=message or cls.message, success=success or cls.success)
 
-    def to_response(self):
-        return self.http_status, self
 
 class SuccessResponse(BaseResponse):
     http_status = HTTP_200_OK
@@ -33,6 +33,3 @@ class CreateSuccessResponse(BaseResponse):
     success = True
     message = 'Create success'
 
-class ResponseAPI:
-    def __new__(cls, obj: BaseResponse ):
-        return obj.to_response()
