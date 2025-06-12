@@ -125,17 +125,22 @@ def test_transaction_invalid_wallet_and_category(client, user_admin, login):
 @pytest.mark.django_db
 def test_transaction_removed(client, user, login, wallet_user_01, create_transaction):
     auth = login(client, user)
+    wallet_user_01.balance = 50000
+    wallet_user_01.save()
     begin_balance_wallet = wallet_user_01.balance
 
     data = {
         "wallet_id": wallet_user_01.pk,
         "amount": 10000,
-        "category_id": 3,
-        "user_id": user.pk
+        "category_id": 1,
     }
-    transaction = create_transaction(**data)
+    response_create = auth('post', '/api/transaction/', data)
+    transaction_id = response_create.json()['data']["id"]
 
-    response_delete = auth('delete', f'/api/transaction/{transaction.pk}', None)
+    wallet_user_01.refresh_from_db()
+    assert wallet_user_01.balance == 40000
+
+    response_delete = auth('delete', f'/api/transaction/{transaction_id}', None)
 
     wallet_user_01.refresh_from_db()
 

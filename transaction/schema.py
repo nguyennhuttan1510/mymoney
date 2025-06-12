@@ -1,5 +1,6 @@
 from typing import Optional
 from ninja import ModelSchema, Schema
+from pydantic import Field
 
 from transaction.models import Transaction
 
@@ -13,11 +14,15 @@ class TransactionSchema(ModelSchema):
 
 
 class TransactionCreateSchema(ModelSchema):
-    budget_id: Optional[int] = None
+    wallet: int = Field(..., alias='wallet_id')
+    category: int = Field(..., alias='category_id')
 
     class Meta:
         model = Transaction
         fields = ['wallet', 'budget', 'amount', 'note', 'category', 'transaction_date']
+
+    class Config:
+        orm_mode = True
 
 
 class TransactionUpdateSchema(Schema):

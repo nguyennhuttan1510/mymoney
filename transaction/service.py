@@ -1,43 +1,28 @@
-from django.contrib.auth.models import User
-from django.db import transaction as transaction_db
-
-from category.models import Category
-from core.models.transactions import SpendingTransaction
+from core.models.transactions import TransactionService
 from transaction.schema import TransactionCreateSchema, TransactionUpdateSchema
-from transaction import repository as repository_transaction
-from transaction.models import Transaction
-from utils.query import query_or_not
-from wallet.models import Wallet
+from utils import repository as repository_transaction
 
 
-class TransactionService:
-    user: User = None
-    transaction_id: int = None
-
-    def __init__(self, user, transaction_id=None):
-        self.user = user
-        self.transaction_id = transaction_id
-
-    def create_transaction(self, data: TransactionCreateSchema):
-        transaction_data = {"amount": data.amount, "category_id": data.category, "wallet_id": data.wallet, "budget_id": data.budget, 'user_id': self.user.pk}
-        transaction = SpendingTransaction(Transaction(**transaction_data))
-
-        return transaction.process()
+def create_transaction(data: TransactionCreateSchema, user_id):
+    payload_transaction = {**data.dict(by_alias=True), 'user_id': user_id}
+    transaction = TransactionService.process(payload=payload_transaction)
+    return transaction
 
 
-    def get_all_transaction(self, *args, **kwarg):
-        return repository_transaction.get_all(self.user, *args, **kwarg)
+def get_all_transaction(user_id):
+    return repository_transaction.get_all(user_id)
 
 
-    def update_transaction(self, data: TransactionUpdateSchema):
-        transaction_updated = repository_transaction.get_by_id(self.transaction_id)
-        for field, value in data.dict().items():
-            if value is not None:
-                setattr(transaction_updated, field, value)
+def update_transaction(transaction_id: int, data: TransactionUpdateSchema, user_id:int):
+    transaction_updated = repository_transaction.get_by_id(transaction_id)
+    for field, value in data.dict().items():
+        if value is not None:
+            setattr(transaction_updated, field, value)
+    payload_transaction = {**TransactionCreateSchema.from_orm(transaction_updated).dict(by_alias=True), 'user_id': user_id}
+    return TransactionService.execute(action='modify', payment_method='cash', transaction_id=transaction_id, payload_transaction=payload_transaction, user_id=user_id)
 
-        transaction = SpendingTransaction(transaction_updated)
-        return transaction.process()
 
-    def delete_transaction(self, transaction_id: int):
-        transaction = repository_transaction.get_by_id(transaction_id)
-        return repository_transaction.delete(transaction)
+def delete_transaction(transaction_id: int, user_id: int):
+    # TransactionService.execute('cancel', payment_method='cash', transaction_id=transaction_id, user_id=user_id)
+    transaction = repository_transaction.get_by_id(transaction_id)
+    TransactionService.destroy(transaction_id)
