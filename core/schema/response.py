@@ -13,8 +13,8 @@ class ResponseSchema(Schema, Generic[T]):
 
 
 class BaseResponse:
-    http_status: int = 200
-    success: bool = True
+    http_status: int = None
+    success: bool = None
     message: Optional[str] = None
 
     def __new__(cls, message: str = None, data: Optional[Any] = None, success=True):
@@ -32,4 +32,14 @@ class CreateSuccessResponse(BaseResponse):
     http_status = HTTP_201_CREATED
     success = True
     message = 'Create success'
+
+class BadRequestResponse(BaseResponse):
+    http_status = HTTP_400_BAD_REQUEST
+    success = False
+    message = 'Bad request'
+
+class NotFoundResponse(BaseResponse):
+    http_status = HTTP_404_NOT_FOUND
+    success = False
+    message = 'Not found'
 

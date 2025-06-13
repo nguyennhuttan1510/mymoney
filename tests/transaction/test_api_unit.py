@@ -49,9 +49,9 @@ def test_wallet_balance_after_transaction(client, user_admin, login, wallet_admi
 
 
 @pytest.mark.parametrize('wallet, category_id, amount, wallet_edit, category_id_edit, amount_edit, wallet_expected, wallet_2_expected', [
-    ('wallet_admin_01', 3, 10000, 'wallet_admin_01', 3, 20000, 30000, 50000),
-    ('wallet_admin_01', 3, 50000, 'wallet_admin_01', 3, 10000, 40000, 50000),
-    ('wallet_admin_01',3, 50000, 'wallet_admin_01', 15, 10000, 60000, 50000),
+    ('wallet_admin_01', 3, 10000, 'wallet_admin_01', 3, 20000, 30000, 30000),
+    ('wallet_admin_01', 3, 50000, 'wallet_admin_01', 3, 10000, 40000, 40000),
+    ('wallet_admin_01',3, 50000, 'wallet_admin_01', 15, 10000, 60000, 60000),
     ('wallet_admin_01',3, 50000, 'wallet_admin_02', 15, 10000, 50000, 60000),
     ('wallet_admin_01',3, 2000, 'wallet_admin_02', 15, 30000, 50000, 80000),
 ])
@@ -93,7 +93,6 @@ def test_wallet_balance_after_edit_transaction(wallet, category_id, amount, wall
 
     print('data', data)
     response = auth('patch', f'/api/transaction/{transaction_id}', data)
-    print('response', response.json())
     print('response', response.json()['data'])
 
     wallet.refresh_from_db()
@@ -103,7 +102,7 @@ def test_wallet_balance_after_edit_transaction(wallet, category_id, amount, wall
 
     assert response.status_code == 200
     assert wallet.balance == wallet_expected
-    # assert wallet_2.balance == wallet_2_expected
+    assert wallet_2.balance == wallet_2_expected
 
 
 @pytest.mark.django_db

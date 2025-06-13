@@ -6,7 +6,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class JWTAuth(HttpBearer):
-    def authenticate(self, request: HttpRequest, token: str) -> Optional[Any]:
+    def authenticate(self, request: HttpRequest, token) -> Optional[Any]:
         jwt_auth = JWTAuthentication()
         try:
             validated_token = jwt_auth.get_validated_token(token)

@@ -16,13 +16,12 @@ class TransactionSchema(ModelSchema):
 class TransactionCreateSchema(ModelSchema):
     wallet: int = Field(..., alias='wallet_id')
     category: int = Field(..., alias='category_id')
+    amount: int
+    transaction_date: str = Optional[str]
 
     class Meta:
         model = Transaction
         fields = ['wallet', 'budget', 'amount', 'note', 'category', 'transaction_date']
-
-    class Config:
-        orm_mode = True
 
 
 class TransactionUpdateSchema(Schema):

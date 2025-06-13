@@ -12,7 +12,7 @@ from wallet.models import Wallet
 class Transaction(Datetime):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     note = models.TextField(null=True, default=None)
-    transaction_date = models.DateTimeField(null=True, blank=True)
+    transaction_date = models.DateTimeField(auto_now_add=True)
     category = models.ForeignKey(Category, blank=True, null=True, on_delete=models.SET_NULL, related_name='transactions')
     user = models.ForeignKey(User, related_name='transactions', on_delete=models.CASCADE)
     wallet = models.ForeignKey(Wallet, related_name='transactions', on_delete=models.CASCADE)
