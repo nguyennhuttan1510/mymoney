@@ -5,11 +5,11 @@ from ninja import Schema
 from budget.schema import BudgetSchema
 from transaction.schema import TransactionSchema
 from wallet.models import Wallet
-from wallet.schema import WalletResponse
+from wallet.schema import WalletOut
 
 
 class ReportWalletTransaction(Schema):
-    wallet: WalletResponse
+    wallet: WalletOut
     transactions: List[TransactionSchema]
 
 class ResponseBudgetTransaction(Schema):

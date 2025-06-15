@@ -5,4 +5,7 @@ from wallet.models import Wallet
 
 
 class WalletRepository(Repository):
-    def get_all_for_user
+    model = Wallet
+
+    def get_all_for_user(self, user_id):
+        return self.filter(user_id=user_id)

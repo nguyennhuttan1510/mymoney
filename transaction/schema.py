@@ -17,7 +17,6 @@ class TransactionCreateSchema(ModelSchema):
     wallet: int = Field(..., alias='wallet_id')
     category: int = Field(..., alias='category_id')
     amount: int
-    transaction_date: str = Optional[str]
 
     class Meta:
         model = Transaction

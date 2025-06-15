@@ -3,20 +3,24 @@ from http.client import HTTPException
 from ninja import Router, PatchDict
 from rest_framework.exceptions import NotFound
 
-from core.schema.response import ResponseSchema, BaseResponse
+from core.schema.response import ResponseSchema, BaseResponse, CreateSuccessResponse
 from services.auth_jwt import JWTAuth
 from wallet.models import Wallet
-from wallet.schema import WalletResponse, WalletRequest
+from wallet.schema import WalletOut, WalletIn
+from wallet.service import WalletService
 
 router = Router(tags=['Wallet'], auth=JWTAuth())
 
-@router.post('/', response=ResponseSchema[WalletResponse])
-def create_wallet(request, payload: WalletRequest):
-    wallet = Wallet.objects.create(user=request.user,**payload.dict())
-    return BaseResponse(data=wallet, message="Wallet created successfully")
+@router.post('/', response={201: ResponseSchema[WalletOut], 500: ResponseSchema})
+def create_wallet(request, payload: WalletIn):
+    try:
+        wallet = WalletService.create_wallet(user=request.user, data=payload)
+        return CreateSuccessResponse(data=wallet, message="Wallet created successfully")
+    except Exception as e:
+        raise HTTPException(f'Create wallet failed - {str(e)}')
 
 
-@router.get('/{int:wallet_id}', response=ResponseSchema[WalletResponse])
+@router.get('/{int:wallet_id}', response=ResponseSchema[WalletOut])
 def get_wallet(request, wallet_id:int):
     try:
         wallet = Wallet.objects.get(user=request.user, id=wallet_id)
@@ -27,8 +31,8 @@ def get_wallet(request, wallet_id:int):
         raise HTTPException(str(e))
 
 
-@router.put('/{int:wallet_id}', response=ResponseSchema[WalletResponse])
-def update_wallet(request, wallet_id:int, item: PatchDict[WalletRequest]):
+@router.put('/{int:wallet_id}', response=ResponseSchema[WalletOut])
+def update_wallet(request, wallet_id:int, item: PatchDict[WalletIn]):
     try:
         wallet = Wallet.objects.get(user=request.user, id=wallet_id)
         for key, value in item.items():
@@ -41,7 +45,7 @@ def update_wallet(request, wallet_id:int, item: PatchDict[WalletRequest]):
         raise HTTPException(str(e))
 
 
-@router.delete('/{int:wallet_id}', response=ResponseSchema[WalletResponse])
+@router.delete('/{int:wallet_id}', response=ResponseSchema[WalletOut])
 def delete_wallet(request, wallet_id:int):
     try:
         wallet = Wallet.objects.get(user=request.user, id=wallet_id)
