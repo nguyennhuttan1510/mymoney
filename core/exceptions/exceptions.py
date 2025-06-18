@@ -11,5 +11,10 @@ class ServerError(APIException):
     default_detail = 'Server Error (500).'
     default_code = 'server_error'
 
+class ValidateError(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    default_detail = 'Invalid input.'
+    default_code = 'invalid'
+
 
 

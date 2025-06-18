@@ -5,10 +5,11 @@ from django.db import transaction as transaction_db
 
 from core.exceptions.exceptions import BadRequest
 from category.models import Category
+from core.schema.service_abstract import ServiceAbstract
 from transaction.models import Transaction
 from transaction.repository import TransactionRepository
-from transaction.schema import TransactionCreateSchema, TransactionUpdateSchema
-from utils.common import TransactionType
+from transaction.schema import TransactionIn, TransactionUpdateSchema
+from enums.transaction import TransactionType
 from wallet.models import Wallet
 from wallet.service import WalletService
 
@@ -36,11 +37,11 @@ class Validator:
             raise ObjectDoesNotExist("Transaction does not exist.")
 
 
-class TransactionService:
+class TransactionService(ServiceAbstract):
     repository = TransactionRepository()
 
     @classmethod
-    def process(cls, payload: TransactionCreateSchema | TransactionUpdateSchema, user: User, action: Literal['create' , 'update'], transaction_id: int = None) -> Transaction:
+    def process(cls, payload: TransactionIn | TransactionUpdateSchema, user: User, action: Literal['create' , 'update'], transaction_id: int = None) -> Transaction:
         if action == 'create':
             return cls._create_transaction(payload=payload, user=user)
         else:
@@ -55,7 +56,7 @@ class TransactionService:
         return transaction
 
     @classmethod
-    def _create_transaction(cls, payload: TransactionCreateSchema, user):
+    def _create_transaction(cls, payload: TransactionIn, user):
         wallet = Validator.get_wallet(wallet_id=payload.wallet)
         category = Validator.get_category(category_id=payload.category)
         cls._ensure_positive_amount(amount=payload.amount)

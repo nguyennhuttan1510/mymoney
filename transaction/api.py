@@ -5,12 +5,12 @@ from ninja import Router
 from transaction.service import TransactionService
 from core.schema.response import ResponseSchema, SuccessResponse, CreateSuccessResponse, BadRequestResponse, NotFoundResponse
 from services.auth_jwt import JWTAuth
-from transaction.schema import TransactionSchema, TransactionCreateSchema, TransactionUpdateSchema
+from transaction.schema import TransactionOut, TransactionIn, TransactionUpdateSchema
 
 router = Router(tags=['Transaction'], auth=JWTAuth())
 
-@router.post("/", response={201: ResponseSchema[TransactionSchema], 400: ResponseSchema, 404: ResponseSchema})
-def create_transaction(request, payload: TransactionCreateSchema ):
+@router.post("/", response={201: ResponseSchema[TransactionOut], 400: ResponseSchema, 404: ResponseSchema})
+def create_transaction(request, payload: TransactionIn):
     try:
         user = getattr(request, 'auth', None)
         transaction = TransactionService.process(action='create', payload=payload, user=user)
@@ -19,26 +19,26 @@ def create_transaction(request, payload: TransactionCreateSchema ):
         return BadRequestResponse(message=f'Create failed - {str(e)}')
 
 
-@router.get("/", response=ResponseSchema[List[TransactionSchema]])
+@router.get("/", response=ResponseSchema[List[TransactionOut]])
 def get_all_transaction(request):
     try:
         user = getattr(request, 'auth', None)
-        transactions = TransactionService.repository.get_all(user_id=user.pk)
+        transactions = TransactionService.repository.get_all_for_user(user_id=user.pk)
         return SuccessResponse(data=transactions, message=f"Get all transactions of user {request.user.pk} successfully")
     except Exception as e:
         return NotFoundResponse(message=f'Get transactions failed - {str(e)}')
 
 
-@router.get("/{int:transaction_id}", response={200: ResponseSchema[TransactionSchema], 404: ResponseSchema})
+@router.get("/{int:transaction_id}", response={200: ResponseSchema[TransactionOut], 404: ResponseSchema})
 def get_transaction(request, transaction_id: int):
     try:
-        transaction = TransactionService.repository.get_by_id(id=transaction_id)
+        transaction = TransactionService.repository.get_by_id(pk=transaction_id)
         return SuccessResponse(data=transaction, message=f'Get transaction {transaction_id} success')
     except ObjectDoesNotExist:
          return NotFoundResponse(f"Transaction with id {transaction_id} does not exist")
 
 
-@router.patch("/{int:transaction_id}", response={200:ResponseSchema[TransactionSchema], 400:ResponseSchema})
+@router.patch("/{int:transaction_id}", response={200:ResponseSchema[TransactionOut], 400:ResponseSchema})
 def update_transaction(request, transaction_id: int, payload: TransactionUpdateSchema):
     try:
         user = getattr(request, 'auth', None)

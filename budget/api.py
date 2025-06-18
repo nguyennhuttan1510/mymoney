@@ -5,14 +5,14 @@ from ninja import Router
 from rest_framework.exceptions import NotFound
 
 from budget.models import Budget
-from budget.schema import BudgetSchema, BudgetCreateSchema
+from budget.schema import BudgetOut, BudgetIn
 from category.models import Category
 from core.schema.response import ResponseSchema, BaseResponse
 from services.auth_jwt import JWTAuth
 
 router = Router(tags=['Budget'], auth=JWTAuth())
 
-@router.get("/{int:budget_id}", response=ResponseSchema[BudgetSchema])
+@router.get("/{int:budget_id}", response=ResponseSchema[BudgetOut])
 def get_budget(request, budget_id:int):
     try:
         budget = Budget.objects.get(Q(id=budget_id) & Q(user__pk=request.user.pk))
@@ -24,8 +24,8 @@ def get_budget(request, budget_id:int):
         raise HTTPException(str(e))
 
 
-@router.post("/", response=ResponseSchema[BudgetSchema])
-def create_budget(request, payload: BudgetCreateSchema):
+@router.post("/", response=ResponseSchema[BudgetOut])
+def create_budget(request, payload: BudgetIn):
     try:
         category = Category.objects.get(id=payload.category)
         budget_data = {**payload.dict(), "category": category}

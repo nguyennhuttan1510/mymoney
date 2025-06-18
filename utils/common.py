@@ -1,10 +1,4 @@
-from enum import Enum
 
+def get_choices(enum):
+    return [(c.value, c.name) for c in enum]
 
-class TransactionType(Enum):
-    INCOME = 'INCOME'
-    EXPENSE = 'EXPENSE'
-
-    @classmethod
-    def get_choices(cls):
-        return [(c.value, c.name) for c in cls]

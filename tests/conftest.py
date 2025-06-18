@@ -1,4 +1,5 @@
 from tokenize import generate_tokens
+from rest_framework.test import APIClient
 
 import pytest
 from django.contrib.auth.models import User
@@ -23,13 +24,6 @@ def user_factory(db):
     return user_create
 
 @pytest.fixture
-def access_token_factory(user_admin):
-    def generate_token(user=user_admin):
-        refresh_token = RefreshToken.for_user(user=user)
-        return refresh_token.access_token
-    return generate_token
-
-@pytest.fixture
 def wallet_factory(user_admin):
     def create_wallet(name="Default Wallet", balance=0, user=user_admin) -> Wallet:
         return Wallet.objects.create(user=user, name=name, balance=balance)
@@ -42,11 +36,18 @@ def category_factory():
     return create_category
 
 @pytest.fixture
-def login(access_token_factory):
+def login():
     def access(client, user):
-        access_token = access_token_factory(user)
-        return auth_client(client, access_token)
+        return auth_client(client, user)
     return access
+
+@pytest.fixture
+def authentication(user):
+    user = User.objects.get(pk=user.pk)
+    token = str(RefreshToken.for_user(user=user))
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+    return client
 
 # ======================================= INIT DATABASE =======================================
 

@@ -4,7 +4,6 @@ from django.db import models
 from budget.models import Budget
 from category.models import Category
 from core.models.datetime import Datetime
-from utils.common import TransactionType
 from wallet.models import Wallet
 
 

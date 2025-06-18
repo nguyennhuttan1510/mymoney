@@ -1,5 +1,3 @@
-from traceback import print_tb
-
 import pytest
 
 from category.models import Category

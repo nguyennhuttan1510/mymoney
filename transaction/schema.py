@@ -5,18 +5,18 @@ from pydantic import Field
 from transaction.models import Transaction
 
 
-class TransactionSchema(ModelSchema):
+class TransactionOut(ModelSchema):
     amount: int
-
     class Meta:
         model = Transaction
         fields = ['id', 'budget', 'wallet', 'amount', 'note', 'category', 'transaction_date']
 
 
-class TransactionCreateSchema(ModelSchema):
+class TransactionIn(ModelSchema):
     wallet: int = Field(..., alias='wallet_id')
     category: int = Field(..., alias='category_id')
     amount: int
+    transaction_date: Optional[str] = None
 
     class Meta:
         model = Transaction

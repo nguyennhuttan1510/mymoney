@@ -1,22 +1,10 @@
-from typing import List, Optional
-
 from budget.models import Budget
+from utils.repository import Repository
 
 
-def create(data: dict) -> Budget:
-    return Budget.objects.create(**data)
+class BudgetRepository(Repository):
+    def __init__(self):
+        super().__init__(model=Budget)
 
-def get_all() -> List[Budget]:
-    return Budget.objects.filter()
-
-def get_by_id(budget_id: int, *args, **kwargs) -> Optional[Budget]:
-    return Budget.objects.get(pk=budget_id, *args, **kwargs)
-
-def update(budget: Budget, data: dict) -> Optional[Budget]:
-    for field, value in data.items():
-        setattr(budget, field, value)
-    budget.save()
-    return budget
-
-def delete(budget: Budget):
-    budget.delete()
+    def get_all_for_user(self, user_id, *args, **kwargs):
+        return self.filter(wallet__user__pk=user_id, *args, **kwargs)
