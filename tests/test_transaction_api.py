@@ -1,14 +1,7 @@
 import pytest
-
-from category.models import Category
-from transaction.models import Transaction
 from wallet.models import Wallet
 
-@pytest.fixture
-def create_transaction(db):
-    def make_transaction(**kwargs):
-        return Transaction.objects.create(**kwargs)
-    return make_transaction
+# ===============================================================================
 
 @pytest.mark.django_db
 def test_create_transaction_unit(client, user_admin, login, wallet_admin_01):
@@ -46,6 +39,7 @@ def test_wallet_balance_after_transaction(client, user_admin, login, wallet_admi
     assert wallet_admin_01.balance == 40000
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize('wallet, category_id, amount, wallet_edit, category_id_edit, amount_edit, wallet_expected, wallet_2_expected', [
     ('wallet_admin_01', 3, 10000, 'wallet_admin_01', 3, 20000, 30000, 30000),
     ('wallet_admin_01', 3, 50000, 'wallet_admin_01', 3, 10000, 40000, 40000),
@@ -120,7 +114,7 @@ def test_transaction_invalid_wallet_and_category(client, user_admin, login):
 
 
 @pytest.mark.django_db
-def test_transaction_removed(client, user, login, wallet_user_01, create_transaction):
+def test_transaction_removed(client, user, login, wallet_user_01):
     auth = login(client, user)
     wallet_user_01.balance = 50000
     wallet_user_01.save()

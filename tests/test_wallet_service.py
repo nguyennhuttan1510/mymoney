@@ -19,6 +19,7 @@ params = [
     (15, 20000, 120000),
 ]
 
+@pytest.mark.django_db
 @pytest.mark.parametrize('category,amount,expected', params)
 def test_calculate_balance(init_data, category, amount, expected):
     init_data()

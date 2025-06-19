@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from ninja import ModelSchema, Schema
 from pydantic import Field
@@ -14,7 +15,7 @@ class BudgetOut(ModelSchema):
 
     class Meta:
         model = Budget
-        fields = ['id', 'wallet', 'amount', 'category', 'start_date', 'end_date']
+        fields = ['id', 'wallet', 'amount', 'category', 'description', 'start_date', 'end_date']
 
 
 class BudgetIn(ModelSchema):
@@ -26,7 +27,17 @@ class BudgetIn(ModelSchema):
         model = Budget
         fields = ['wallet', 'amount', 'category', 'start_date', 'end_date']
 
+class BudgetUpdate(Schema):
+    wallet_id: int = None
+    category_id: int = None
+    amount: float = None
+    description: str = None
+    start_date: datetime = None
+    end_date: datetime = None
+
 
 class BudgetParam(Schema):
     wallet_id: int = None
     category_id: int = None
+    amount: float = None
+    user_id: int = None

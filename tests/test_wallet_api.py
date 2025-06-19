@@ -62,7 +62,7 @@ get_params = [
     ({}, ['WALLET_01', 'WALLET_02', 'WALLET_03', 'WALLET_04']),
 ]
 
-
+@pytest.mark.django_db
 @pytest.mark.parametrize("get_param,expect_name", get_params)
 def test_get_with_params(get_param, expect_name, client, login, user, create_wallets, ):
     create_wallets()
@@ -131,6 +131,7 @@ create_payloads = [
 ]
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize("payload", create_payloads)
 def test_create_validate_error_payload(client, login, user, payload, create_wallets):
     create_wallets()
