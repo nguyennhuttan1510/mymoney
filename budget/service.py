@@ -26,12 +26,14 @@ class BudgetService(ServiceAbstract):
     @classmethod
     def get_budget(cls, budget_id: int, user_id: int):
         try:
-            return cls.repository.get_by_id(pk=budget_id)
+            return cls.repository.get_by_id(pk=budget_id, wallet__user__pk=user_id)
         except ObjectDoesNotExist:
-            ObjectDoesNotExist('budget not found')
+            raise ObjectDoesNotExist('budget not found')
 
     @classmethod
-    def update_budget(cls, budget_id: int ,payload: BudgetUpdate, user_id:int):
+    def update_budget(cls, budget_id: int, payload: BudgetUpdate, user_id: int):
+        if hasattr(payload, 'wallet_id'):
+            cls._check_wallet_existed(wallet_id=payload.wallet_id)
         instance = cls.get_budget(budget_id=budget_id, user_id=user_id)
         return cls.repository.update(instance=instance, data=payload.dict(exclude_unset=True))
 
