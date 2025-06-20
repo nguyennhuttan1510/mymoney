@@ -54,4 +54,3 @@ class WalletService(ServiceAbstract):
         exist = cls.repository.filter(name=wallet_name, user__id=user_id).exists()
         if exist:
             raise ValueError('wallet name existed')
-        pass

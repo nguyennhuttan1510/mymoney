@@ -3,6 +3,7 @@ import pytest
 from budget.models import Budget
 from enums.transaction import TransactionType
 from tests.helper import create_wallet, create_category, create_budget
+from wallet.models import Wallet
 
 
 @pytest.fixture
@@ -32,7 +33,11 @@ def category_02():
 
 @pytest.fixture
 def valid_payload(wallet_01, category_01):
-    return {"amount": 10000, "wallet_id": wallet_01.pk, "category_id": category_01.pk,
+    return {"amount": 10000, "wallet": {
+        "name": "Wallet_010",
+        "balance": 1000,
+        "type": "CASH"
+    }, "category_id": category_01.pk,
             "description": "this is description"}
 
 
@@ -51,12 +56,6 @@ get_params = [
     ({}, 3)
 ]
 
-invalid_payload = [
-    ({"wallet_id": 1, "category_id": 1, "description": "this is description"}, "amount"), # miss amount
-    ({"amount": 100000, "category_id": 2, "description": "this is description"}, "wallet_id"), # miss wallet_id
-    ({"amount": 'adv', "wallet_id": 1, "category_id": 3, "description": "this is description"}, "amount"), # invalid amount
-]
-
 
 # =============================================================================
 
@@ -66,10 +65,11 @@ def test_create_budget_success(client, login, user, valid_payload):
     res = auth('post', '/api/budget/', data=valid_payload)
     assert res.status_code == 201
     data = res.json()
+    print('data', data)
     assert "id" in data['data']
     assert data['data']['amount'] == valid_payload['amount']
     assert data['data']['category']['id'] == valid_payload['category_id']
-    assert data['data']['wallet']['id'] == valid_payload['wallet_id']
+    assert data['data']['wallet']['name'] == valid_payload['wallet']['name']
 
 
 @pytest.mark.django_db
@@ -122,19 +122,18 @@ def test_delete_budget(client, login, user, init_budget):
     assert Budget.objects.filter(pk=budget_id).exists() == False
 
 
-# ============================================== UNEXPECTED CASE ===========================================
-
-
 @pytest.mark.django_db
-@pytest.mark.parametrize('payload, error_field', invalid_payload)
-def test_create_invalid(client, login, user, payload, error_field):
+def test_delete_budget_cascade_wallet(client, login, user, init_budget):
     auth = login(client, user)
-    res = auth('post', '/api/budget/', payload)
-    errors = res.json()['errors']
-    assert res.status_code == 422
-    assert "errors" in res.json()
-    for key, value in errors.items():
-        assert error_field in key
+    budgets = Budget.objects.all()
+    budget_delete = budgets[0]
+    res = auth('delete', f'/api/budget/{budget_delete.pk}')
+    print(res.json())
+    assert res.status_code == 200
+    assert Budget.objects.filter(pk=budget_delete.pk).exists() == False
+
+
+# ============================================== UNEXPECTED CASE ===========================================
 
 
 @pytest.mark.django_db
@@ -146,31 +145,9 @@ def test_not_get_budget_of_other_user(client, login, user_admin, wallet_01, init
 
 
 @pytest.mark.django_db
-def test_budget_only_one_wallet(client, login, user, valid_payload):
-    auth = login(client, user)
-    res_01 = auth('post', '/api/budget/', valid_payload)
-    data_01 = res_01.json()['data']
-    assert res_01.status_code == 201
-    assert 'id' in data_01
-    res_02 = auth('post', '/api/budget/', valid_payload)
-    assert res_02.status_code == 422
-
-
-@pytest.mark.django_db
-def test_update_budget_with_wallet_existed_in_other_budget(client, login, user, wallet_01, wallet_02, init_budget):
-    auth = login(client, user)
-    budget = Budget.objects.get(wallet__id=wallet_01.pk)
-    payload = {"wallet_id": wallet_02.pk}
-    res = auth('patch', f'/api/budget/{budget.pk}', data=payload)
-    print(res.json())
-    assert res.status_code == 422
-
-
-@pytest.mark.django_db
 def test_delete_budget_other_user(client, login, user_admin, wallet_01, init_budget):
     auth = login(client, user_admin)
     budget = Budget.objects.get(wallet__id=wallet_01.pk)
     res = auth('delete', f'/api/budget/{budget.pk}')
     print('res', res.json())
     assert res.status_code == 404
-
