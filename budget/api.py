@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router, Query, PatchDict
 from rest_framework.exceptions import NotFound
 
-from budget.schema import BudgetOut, BudgetIn, BudgetParam, BudgetUpdate
+from budget.schema import BudgetOut, BudgetIn, BudgetParam, BudgetUpdate, BudgetOutWithCategory
 from budget.service import BudgetService
 from core.exceptions.exceptions import ValidateError
 from core.schema.response import ResponseSchema, CreateSuccessResponse, SuccessResponse
@@ -30,16 +30,16 @@ def create_budget(request, payload: BudgetIn):
 @router.get("/", response={200: ResponseSchema[List[BudgetOut]], 422: ResponseSchema})
 def get_budgets(request, filters: Query[BudgetParam]):
     try:
-        budgets = BudgetService.get_all_budget_for_user(user_id=request.auth.pk, **filters.dict(exclude_unset=True))
+        budgets = BudgetService.get_all_budget_for_user(user_id=request.auth.pk, params=filters)
         return SuccessResponse(data=budgets, message='Get budgets success')
     except Exception as e:
         raise HTTPException(str(e))
 
 
-@router.get("/{int:budget_id}", response={200: ResponseSchema[BudgetOut], 422: ResponseSchema})
+@router.get("/{int:budget_id}", response={200: ResponseSchema[BudgetOutWithCategory], 422: ResponseSchema})
 def get_budget(request, budget_id: int):
     try:
-        budget = BudgetService.get_budget(budget_id=budget_id, user_id=request.auth.pk)
+        budget = BudgetService.get_budget_with_category(budget_id=budget_id)
         return SuccessResponse(data=budget, message="Get budget successfully")
 
     except ObjectDoesNotExist:
