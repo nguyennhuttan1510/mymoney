@@ -1,10 +1,12 @@
 from typing import Optional
 
 from ninja import Schema
+from pydantic import Field
+
 
 class LoginSchema(Schema):
-    username: str
-    password: str
+    username: str = Field(default='admin')
+    password: str = Field(default='o0i9u8y7')
 
 class RegisterSchema(LoginSchema, Schema):
     email: str

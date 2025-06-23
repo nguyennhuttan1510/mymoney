@@ -4,15 +4,15 @@ from django.db.models import Q
 from ninja import Query
 
 from budget.models import Budget
-from budget.schema import BudgetParam
-from utils.repository import Repository, T
+from budget.schema import BudgetQueryParam
+from utils.repository import Repository
 
 
 class BudgetRepository(Repository[Budget]):
     def __init__(self):
         super().__init__(model=Budget)
 
-    def create(self, data: dict) -> T:
+    def create(self, data: dict):
         categories = data.pop('category', None)
         wallets = data.pop('wallet', None)
         instance = super().create(data)
@@ -20,7 +20,7 @@ class BudgetRepository(Repository[Budget]):
         instance.wallet.set(wallets)
         return instance
 
-    def get_all_for_user(self, user_id, params: Query[BudgetParam]):
+    def get_all_for_user(self, user_id, params: Query[BudgetQueryParam]):
         query = Q()
         params_dict = params.model_dump(exclude_unset=True, exclude={'wallets', 'categories'})
         for k, v in params_dict.items():
@@ -32,7 +32,7 @@ class BudgetRepository(Repository[Budget]):
             query &= Q(category__in=params.categories)
         return self.filter(query)
 
-    def update(self, instance: T, data: dict) -> Optional[T]:
+    def update(self, instance, data: dict):
         categories = data.pop("categories", None)
         wallets = data.pop("wallets", None)
         if categories:

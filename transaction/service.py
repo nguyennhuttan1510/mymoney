@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction as transaction_db
 
+from budget.models import Budget
+from budget.repository import BudgetRepository
 from core.exceptions.exceptions import BadRequest
 from category.models import Category
 from core.schema.service_abstract import ServiceAbstract
@@ -59,7 +61,6 @@ class TransactionService(ServiceAbstract):
     def _create_transaction(cls, payload: TransactionIn, user):
         wallet = Validator.get_wallet(wallet_id=payload.wallet)
         category = Validator.get_category(category_id=payload.category)
-        cls._ensure_positive_amount(amount=payload.amount)
         cls._ensure_sufficient_balance(amount=payload.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
@@ -72,7 +73,6 @@ class TransactionService(ServiceAbstract):
         transaction = Validator.get_transaction(transaction_id)
         wallet = Validator.get_wallet(wallet_id=data.wallet_id)
         category = Validator.get_category(category_id=data.category_id)
-        cls._ensure_positive_amount(amount=data.amount)
         cls._ensure_sufficient_balance(amount=data.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
@@ -82,10 +82,11 @@ class TransactionService(ServiceAbstract):
             transaction_updated = cls.repository.update(instance=transaction, data={**data.dict(), 'user_id': user.pk})
             return transaction_updated
 
-    @staticmethod
-    def _ensure_positive_amount(amount: float) -> None:
-        if amount <= 0:
-            raise BadRequest("Amount must be positive.")
+    @classmethod
+    def get_by_budget(cls, budget_id: int):
+        budget = BudgetRepository().get_by_id(pk=budget_id)
+        transactions = cls.repository.filter(wallet__in=budget.wallet.all(), category__in=budget.category.all(), transaction_date__range=(budget.start_date, budget.end_date))
+        return transactions
 
     @staticmethod
     def _ensure_sufficient_balance(amount: float, wallet: Wallet, category: Category) -> None:

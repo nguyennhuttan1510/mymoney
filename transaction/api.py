@@ -1,11 +1,11 @@
 from typing import List
 
 from django.core.exceptions import ObjectDoesNotExist
-from ninja import Router
+from ninja import Router, Query
 from transaction.service import TransactionService
 from core.schema.response import ResponseSchema, SuccessResponse, CreateSuccessResponse, BadRequestResponse, NotFoundResponse
 from services.auth_jwt import JWTAuth
-from transaction.schema import TransactionOut, TransactionIn, TransactionUpdateSchema
+from transaction.schema import TransactionOut, TransactionIn, TransactionUpdateSchema, TransactionQueryParams
 
 router = Router(tags=['Transaction'], auth=JWTAuth())
 
@@ -20,11 +20,13 @@ def create_transaction(request, payload: TransactionIn):
 
 
 @router.get("/", response=ResponseSchema[List[TransactionOut]])
-def get_all_transaction(request):
+def get_all_transaction(request, filter: Query[TransactionQueryParams]):
     try:
-        user = getattr(request, 'auth', None)
-        transactions = TransactionService.repository.get_all_for_user(user_id=user.pk)
-        return SuccessResponse(data=transactions, message=f"Get all transactions of user {request.user.pk} successfully")
+        if filter.budget_id:
+            transactions = TransactionService.get_by_budget(budget_id=filter.budget_id)
+        else:
+            transactions = TransactionService.repository.get_all_for_user(user_id=request.auth.pk)
+        return SuccessResponse(data=transactions, message=f"Get all transactions of user {request.auth.pk} successfully")
     except Exception as e:
         return NotFoundResponse(message=f'Get transactions failed - {str(e)}')
 

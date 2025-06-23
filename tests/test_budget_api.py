@@ -1,10 +1,8 @@
 import pytest
 
 from budget.models import Budget
-from budget.schema import BudgetIn
-from enums.transaction import TransactionType
-from tests.helper import create_wallet, create_category, create_budget
-from wallet.models import Wallet
+from category.models import Category
+from tests.helper import create_wallet
 
 
 @pytest.fixture
@@ -23,23 +21,13 @@ def wallet_03(user):
 
 
 @pytest.fixture
-def category_01():
-    return create_category(name='Thuế', category_type=TransactionType.EXPENSE.value)
-
-
-@pytest.fixture
-def category_02():
-    return create_category(name='Tín dụng', category_type=TransactionType.EXPENSE.value)
-
-
-@pytest.fixture
-def valid_payload(wallet_01, category_01):
-    return {"name": "Budget", "amount": 10000, "wallets": [wallet_01.pk], "categories": [category_01.pk],
+def valid_payload(wallet_01):
+    return {"name": "Budget", "amount": 10000, "wallets": [wallet_01.pk], "categories": [1],
             "description": "this is description"}
 
 
 @pytest.fixture
-def init_budget(wallet_01, wallet_02, wallet_03, category_01, category_02):
+def init_budget(wallet_01, wallet_02, wallet_03):
     def creat():
         budget_01 = Budget.objects.create(
             amount=10000,
@@ -47,8 +35,8 @@ def init_budget(wallet_01, wallet_02, wallet_03, category_01, category_02):
             start_date='2025-06-22',
             end_date='2025-06-22'
         )
-        budget_01.category.set([category_01])
-        budget_01.wallet.set([wallet_01])
+        budget_01.category.set(Category.objects.all())
+        budget_01.wallet.set([wallet_01, wallet_02])
 
         budget_02 = Budget.objects.create(
             amount=20000,
@@ -56,7 +44,7 @@ def init_budget(wallet_01, wallet_02, wallet_03, category_01, category_02):
             start_date='2025-06-22',
             end_date='2025-06-22'
         )
-        budget_02.category.set([category_01])
+        budget_02.category.set([Category.objects.get(pk=1)])
         budget_02.wallet.set([wallet_02])
 
         budget_03 = Budget.objects.create(
@@ -65,17 +53,17 @@ def init_budget(wallet_01, wallet_02, wallet_03, category_01, category_02):
             start_date='2025-06-22',
             end_date='2025-06-22'
         )
-        budget_03.category.set([category_02])
-        budget_03.wallet.set([wallet_03])
+        budget_03.category.set([Category.objects.get(pk=1)])
+        budget_03.wallet.set([wallet_02])
         return [budget_01, budget_02, budget_03]
     return creat
 
 
 get_params = [
     ({'amount': 10000}, 1),
-    # ({'categories': [1]}, 2),
-    # ({'categories': [2]}, 1),
-    ({'wallets': [2]}, 1),
+    ({'categories': [1]}, 3),
+    ({'categories': [2]}, 1),
+    ({'wallets': [2]}, 3),
     ({}, 3)
 ]
 
@@ -118,8 +106,8 @@ def test_get_budget(client, login, user, init_budget):
     data = res.json()['data']
     assert data['amount'] == budget_expected.amount
     assert data['description'] == budget_expected.description
-    assert len(data['categories']) == len(budget_expected.category)
-    assert len(data['wallets']) == len(budget_expected.wallet)
+    assert len(data['categories']) == len(budget_expected.category.all())
+    assert len(data['wallets']) == len(budget_expected.wallet.all())
 
 
 @pytest.mark.django_db
@@ -141,11 +129,13 @@ def test_update_budget(client, login, user, wallet_01, wallet_02, init_budget):
 def test_delete_budget(client, login, user, init_budget):
     init_budget()
     auth = login(client, user)
-    budget_id = 1
-    res = auth('delete', f'/api/budget/{budget_id}')
+    payload = {
+        'ids': [1,2]
+    }
+    res = auth('delete', f'/api/budget/ids', data=payload)
     print(res.json())
     assert res.status_code == 200
-    assert Budget.objects.filter(pk=budget_id).exists() == False
+    assert Budget.objects.filter(pk__in=payload['ids']).exists() == False
 
 
 # ============================================== UNEXPECTED CASE ===========================================

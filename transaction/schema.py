@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Optional
 from ninja import ModelSchema, Schema
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from transaction.models import Transaction
 
@@ -15,8 +16,9 @@ class TransactionOut(ModelSchema):
 class TransactionIn(ModelSchema):
     wallet: int = Field(..., alias='wallet_id')
     category: int = Field(..., alias='category_id')
-    amount: int
-    transaction_date: Optional[str] = None
+    amount: int = Field(default=0, ge=0)
+    transaction_date: datetime = datetime.now()
+    note: str = None
 
     class Meta:
         model = Transaction
@@ -29,3 +31,7 @@ class TransactionUpdateSchema(Schema):
     category_id: Optional[int] = None
     note: Optional[str] = None
     budget_id: Optional[int] = None
+
+
+class TransactionQueryParams(BaseModel):
+    budget_id: int = None
