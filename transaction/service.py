@@ -1,7 +1,8 @@
-from typing import Literal
+from typing import Literal, List
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction as transaction_db
+from django.db.models import Sum, QuerySet
 
 from budget.models import Budget
 from budget.repository import BudgetRepository
@@ -10,7 +11,8 @@ from category.models import Category
 from core.schema.service_abstract import ServiceAbstract
 from transaction.models import Transaction
 from transaction.repository import TransactionRepository
-from transaction.schema import TransactionIn, TransactionUpdateSchema
+from transaction.schema import TransactionIn, TransactionUpdateSchema, TransactionQueryParams, TransactionListOut, \
+    TransactionOut
 from enums.transaction import TransactionType
 from wallet.models import Wallet
 from wallet.service import WalletService
@@ -83,10 +85,22 @@ class TransactionService(ServiceAbstract):
             return transaction_updated
 
     @classmethod
-    def get_by_budget(cls, budget_id: int):
-        budget = BudgetRepository().get_by_id(pk=budget_id)
-        transactions = cls.repository.filter(wallet__in=budget.wallet.all(), category__in=budget.category.all(), transaction_date__range=(budget.start_date, budget.end_date))
-        return transactions
+    def search(cls, params: TransactionQueryParams) -> TransactionListOut:
+        group_by = None
+        if params.budget_id:
+            budget = BudgetRepository().get_by_id(pk=params.budget_id)
+            params.wallets = budget.wallet.all()
+            params.categories = budget.category.all()
+            params.start_date = budget.start_date
+            params.end_date = budget.end_date
+
+        qs = cls.repository.get_all_for_user(params=params)
+        total = cls.repository.sum_amount(qs)
+
+        if params.group_by:
+            group_by = cls.repository.group_by(query=qs, group_by=params.group_by)
+
+        return TransactionListOut(transactions=qs, group_by=group_by, total=total)
 
     @staticmethod
     def _ensure_sufficient_balance(amount: float, wallet: Wallet, category: Category) -> None:

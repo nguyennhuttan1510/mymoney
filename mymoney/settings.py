@@ -55,8 +55,8 @@ INSTALLED_APPS = [
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Token access sống trong 60 phút
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Token refresh sống trong 1 ngày
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=3600),  # Token access sống trong 60 phút
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=2),     # Token refresh sống trong 1 ngày
     'AUTH_HEADER_TYPES': ('Bearer',),               # Header kiểu Bearer
 }
 

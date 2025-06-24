@@ -9,6 +9,7 @@ from budget.repository import BudgetRepository
 from budget.schema import BudgetIn, BudgetUpdate, BudgetOutWithCalculate, BudgetOut, CalculatorBudget
 from core.schema.service_abstract import ServiceAbstract
 from enums.budget import BudgetStatus
+from transaction.schema import TransactionQueryParams
 from transaction.service import TransactionService
 
 
@@ -55,8 +56,8 @@ class BudgetService(ServiceAbstract):
 
     @classmethod
     def calculate_budget(cls, budget: Budget) -> CalculatorBudget:
-        transactions = TransactionService.get_by_budget(budget.pk)
-        total_spent = transactions.aggregate(total=Sum('amount'))['total'] or 0
+        result = TransactionService.search(params=TransactionQueryParams(budget_id=budget.pk))
+        total_spent = result.total
         usage_percent = int((float(total_spent)/float(budget.amount)) * 100)
 
         if usage_percent > 100:
@@ -65,9 +66,4 @@ class BudgetService(ServiceAbstract):
             status = BudgetStatus.WARNING
         else:
             status = BudgetStatus.OK
-        return CalculatorBudget.model_validate({
-            'total_spent': total_spent,
-            'limit': budget.amount,
-            'usage_percent': usage_percent,
-            'status': status
-        })
+        return CalculatorBudget(total_spent=total_spent, status=status, limit=budget.amount, usage_percent=usage_percent)
