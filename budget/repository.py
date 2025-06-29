@@ -5,7 +5,25 @@ from ninja import Query
 
 from budget.models import Budget
 from budget.schema import BudgetParam
+from utils.query_builder import Specification, QueryBuilder
 from utils.repository import Repository, T
+
+class BudgetSpecification(Specification[Budget]):
+    def __init__(self, params: Query[BudgetParam]):
+        self.params = params
+        self.builder = QueryBuilder()
+    def is_satisfied(self) -> Q:
+        params_dict = self.params.model_dump(exclude_unset=True, exclude={'wallets', 'categories'})
+        # build base query
+        for k, v in params_dict.items():
+            if isinstance(v, list): pass
+            self.builder.add_condition(k, v)
+        # build a relationship query
+        if self.params.wallets:
+            self.builder.add_relation_condition('wallet', self.params.wallets)
+        if self.params.categories:
+            self.builder.add_relation_condition('category', self.params.categories)
+        return self.builder.build()
 
 
 class BudgetRepository(Repository[Budget]):
@@ -21,16 +39,8 @@ class BudgetRepository(Repository[Budget]):
         return instance
 
     def get_all_for_user(self, user_id, params: Query[BudgetParam]):
-        query = Q()
-        params_dict = params.model_dump(exclude_unset=True, exclude={'wallets', 'categories'})
-        for k, v in params_dict.items():
-            if isinstance(v, list): pass
-            query &= Q(**{k:v})
-        if params.wallets:
-            query &= Q(wallet__in=params.wallets)
-        if params.categories:
-            query &= Q(category__in=params.categories)
-        return self.filter(query)
+        specification = BudgetSpecification(params)
+        return self.filter(specification)
 
     def update(self, instance: T, data: dict) -> Optional[T]:
         categories = data.pop("categories", None)
