@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Union, List
 
 from ninja import ModelSchema, Schema
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from budget.models import Budget
 from category.schema import CategorySchema
@@ -44,15 +44,27 @@ class BudgetUpdate(Schema):
     end_date: datetime = None
 
 
-class BudgetParam(Schema):
+class BudgetQueryParam(Schema):
     wallets: list[int] = None
     categories: list[int] = None
     amount: float = None
     user_id: int = None
 
 
-class BudgetOutWithCategory(BudgetOut):
-    total_spent: float | None = None
-    limit: float | None = None# the same amount
-    usage_percent: int | None = None
-    status: BudgetStatus | None = None
+class CalculatorBudget(BaseModel):
+    total_spent: float
+    limit: float  # the same amount
+    usage_percent: int
+    status: BudgetStatus
+
+
+class BudgetParam(BaseModel):
+    is_calc: bool = Field(default=False, description='if true return Schema BudgetOutWithCalculate else BudgetOut')
+
+
+class BudgetDeleteIn(BaseModel):
+    ids: list[int]
+
+
+class BudgetOutWithCalculate(BudgetOut, CalculatorBudget):
+    pass

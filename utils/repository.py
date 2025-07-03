@@ -33,8 +33,8 @@ class Repository(Generic[T]):
         instance.save()
         return instance
 
-    def delete(self, instance: T):
-        return instance.delete()
+    def delete(self, instances: T):
+        return instances.delete()
 
 
 

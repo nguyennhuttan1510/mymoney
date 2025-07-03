@@ -4,12 +4,12 @@ from django.db.models import Q
 from ninja import Query
 
 from budget.models import Budget
-from budget.schema import BudgetParam
+from budget.schema import BudgetQueryParam
 from utils.query_builder import Specification, QueryBuilder
 from utils.repository import Repository, T
 
 class BudgetSpecification(Specification[Budget]):
-    def __init__(self, params: Query[BudgetParam]):
+    def __init__(self, params: Query[BudgetQueryParam]):
         self.params = params
         self.builder = QueryBuilder()
     def is_satisfied(self) -> Q:
@@ -38,7 +38,7 @@ class BudgetRepository(Repository[Budget]):
         instance.wallet.set(wallets)
         return instance
 
-    def get_all_for_user(self, user_id, params: Query[BudgetParam]):
+    def get_all_for_user(self, user_id, params: Query[BudgetQueryParam]):
         specification = BudgetSpecification(params)
         return self.filter(specification)
 

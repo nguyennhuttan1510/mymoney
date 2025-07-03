@@ -1,11 +1,12 @@
 from http.client import HTTPException
-from typing import List
+from typing import List, Union
 
 from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router, Query, PatchDict
 from rest_framework.exceptions import NotFound
 
-from budget.schema import BudgetOut, BudgetIn, BudgetParam, BudgetUpdate, BudgetOutWithCategory
+from budget.schema import BudgetOut, BudgetIn, BudgetQueryParam, BudgetUpdate, BudgetOutWithCalculate, BudgetParam, \
+    BudgetDeleteIn
 from budget.service import BudgetService
 from core.exceptions.exceptions import ValidateError
 from core.schema.response import ResponseSchema, CreateSuccessResponse, SuccessResponse
@@ -28,7 +29,7 @@ def create_budget(request, payload: BudgetIn):
 
 
 @router.get("/", response={200: ResponseSchema[List[BudgetOut]], 422: ResponseSchema})
-def get_budgets(request, filters: Query[BudgetParam]):
+def get_budgets(request, filters: Query[BudgetQueryParam]):
     try:
         budgets = BudgetService.get_all_budget_for_user(user_id=request.auth.pk, params=filters)
         return SuccessResponse(data=budgets, message='Get budgets success')
@@ -36,11 +37,17 @@ def get_budgets(request, filters: Query[BudgetParam]):
         raise HTTPException(str(e))
 
 
-@router.get("/{int:budget_id}", response={200: ResponseSchema[BudgetOutWithCategory], 422: ResponseSchema})
-def get_budget(request, budget_id: int):
+@router.get("/{int:budget_id}", response={200: ResponseSchema, 422: ResponseSchema})
+def get_budget(request, budget_id: int, params: Query[BudgetParam]):
     try:
-        budget = BudgetService.get_budget_with_category(budget_id=budget_id)
-        return SuccessResponse(data=budget, message="Get budget successfully")
+        if params.is_calc:
+            instance = BudgetService.get_budget(budget_id=budget_id)
+            budget = BudgetService.get_budget_with_calculate(instance)
+            serialize = BudgetOutWithCalculate.model_validate(budget).model_dump()
+        else:
+            budget = BudgetService.get_budget(budget_id=budget_id)
+            serialize = BudgetOut.model_validate(budget).model_dump()
+        return SuccessResponse(data=serialize, message="Get budget successfully")
 
     except ObjectDoesNotExist:
         raise NotFound(f"Budget with id {budget_id} does not exist")
@@ -61,12 +68,12 @@ def update_budget(request, budget_id: int, payload: BudgetUpdate):
         raise HTTPException(str(e))
 
 
-@router.delete("/{int:budget_id}", response=ResponseSchema)
-def delete_budget(request, budget_id: int):
+@router.delete("/ids", response=ResponseSchema)
+def delete_budget(request, payload: BudgetDeleteIn):
     try:
-        BudgetService.delete_budget(budget_id=budget_id, user_id=request.auth.pk)
-        return SuccessResponse(message=f"Delete budget {budget_id} successfully")
+        BudgetService.delete_budget(budget_ids=payload.ids, user_id=request.auth.pk)
+        return SuccessResponse(message=f"Delete budget {payload.ids.__str__()} successfully")
     except ObjectDoesNotExist:
-        raise NotFound(f'Not found budget {budget_id}')
+        raise NotFound(f'Not found budget')
     except Exception as e:
         raise HTTPException(str(e))

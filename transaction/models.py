@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Manager
 
 from budget.models import Budget
 from category.models import Category

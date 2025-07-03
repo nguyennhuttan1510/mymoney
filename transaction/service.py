@@ -1,14 +1,18 @@
-from typing import Literal
+from typing import Literal, List
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction as transaction_db
+from django.db.models import Sum, QuerySet
 
+from budget.models import Budget
+from budget.repository import BudgetRepository
 from core.exceptions.exceptions import BadRequest
 from category.models import Category
 from core.schema.service_abstract import ServiceAbstract
 from transaction.models import Transaction
 from transaction.repository import TransactionRepository
-from transaction.schema import TransactionIn, TransactionUpdateSchema
+from transaction.schema import TransactionIn, TransactionUpdateSchema, TransactionQueryParams, TransactionListOut, \
+    TransactionOut
 from enums.transaction import TransactionType
 from wallet.models import Wallet
 from wallet.service import WalletService
@@ -59,7 +63,6 @@ class TransactionService(ServiceAbstract):
     def _create_transaction(cls, payload: TransactionIn, user):
         wallet = Validator.get_wallet(wallet_id=payload.wallet)
         category = Validator.get_category(category_id=payload.category)
-        cls._ensure_positive_amount(amount=payload.amount)
         cls._ensure_sufficient_balance(amount=payload.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
@@ -72,7 +75,6 @@ class TransactionService(ServiceAbstract):
         transaction = Validator.get_transaction(transaction_id)
         wallet = Validator.get_wallet(wallet_id=data.wallet_id)
         category = Validator.get_category(category_id=data.category_id)
-        cls._ensure_positive_amount(amount=data.amount)
         cls._ensure_sufficient_balance(amount=data.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
@@ -82,10 +84,23 @@ class TransactionService(ServiceAbstract):
             transaction_updated = cls.repository.update(instance=transaction, data={**data.dict(), 'user_id': user.pk})
             return transaction_updated
 
-    @staticmethod
-    def _ensure_positive_amount(amount: float) -> None:
-        if amount <= 0:
-            raise BadRequest("Amount must be positive.")
+    @classmethod
+    def search(cls, params: TransactionQueryParams) -> TransactionListOut:
+        group_by = None
+        if params.budget_id:
+            budget = BudgetRepository().get_by_id(pk=params.budget_id)
+            params.wallets = list(budget.wallet.values_list('id', flat=True))
+            params.categories = list(budget.category.values_list('id', flat=True))
+            params.start_date = budget.start_date
+            params.end_date = budget.end_date
+
+        qs = cls.repository.get_all_for_user(params=params)
+        total = cls.repository.sum_amount(qs)
+
+        if params.group_by:
+            group_by = cls.repository.group_by(query=qs, group_by=params.group_by)
+
+        return TransactionListOut(transactions=qs, group_by=group_by, total=total)
 
     @staticmethod
     def _ensure_sufficient_balance(amount: float, wallet: Wallet, category: Category) -> None:

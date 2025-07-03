@@ -27,6 +27,9 @@ class QueryBuilder:
         self._query &= Q(**{key+'__in':value})
         return self
 
+    def range(self, key, value) -> 'QueryBuilder':
+        self._query &= Q(**{key + '__range': value})
+        return self
     def build(self) -> Q:
         return self._query
 

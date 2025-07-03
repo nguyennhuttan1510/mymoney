@@ -1,13 +1,19 @@
 from typing import List
 
 from django.core.exceptions import ObjectDoesNotExist
-from ninja import Router
+from ninja import Router, Query
+
+from tests.test_wallet_service import params
+from transaction.models import Transaction
 from transaction.service import TransactionService
-from core.schema.response import ResponseSchema, SuccessResponse, CreateSuccessResponse, BadRequestResponse, NotFoundResponse
+from core.schema.response import ResponseSchema, SuccessResponse, CreateSuccessResponse, BadRequestResponse, \
+    NotFoundResponse
 from services.auth_jwt import JWTAuth
-from transaction.schema import TransactionOut, TransactionIn, TransactionUpdateSchema
+from transaction.schema import TransactionOut, TransactionIn, TransactionUpdateSchema, TransactionQueryParams, \
+    TransactionListOut
 
 router = Router(tags=['Transaction'], auth=JWTAuth())
+
 
 @router.post("/", response={201: ResponseSchema[TransactionOut], 400: ResponseSchema, 404: ResponseSchema})
 def create_transaction(request, payload: TransactionIn):
@@ -19,12 +25,12 @@ def create_transaction(request, payload: TransactionIn):
         return BadRequestResponse(message=f'Create failed - {str(e)}')
 
 
-@router.get("/", response=ResponseSchema[List[TransactionOut]])
-def get_all_transaction(request):
+@router.get("/", response={200: ResponseSchema[TransactionListOut], 404: ResponseSchema})
+def get_all_transaction(request, filters: Query[TransactionQueryParams]):
     try:
-        user = getattr(request, 'auth', None)
-        transactions = TransactionService.repository.get_all_for_user(user_id=user.pk)
-        return SuccessResponse(data=transactions, message=f"Get all transactions of user {request.user.pk} successfully")
+        result = TransactionService.search(params=filters)
+        return SuccessResponse(data=result,
+                               message=f"Get all transactions of user {request.auth.pk} successfully")
     except Exception as e:
         return NotFoundResponse(message=f'Get transactions failed - {str(e)}')
 
@@ -35,15 +41,17 @@ def get_transaction(request, transaction_id: int):
         transaction = TransactionService.repository.get_by_id(pk=transaction_id)
         return SuccessResponse(data=transaction, message=f'Get transaction {transaction_id} success')
     except ObjectDoesNotExist:
-         return NotFoundResponse(f"Transaction with id {transaction_id} does not exist")
+        return NotFoundResponse(f"Transaction with id {transaction_id} does not exist")
 
 
-@router.patch("/{int:transaction_id}", response={200:ResponseSchema[TransactionOut], 400:ResponseSchema})
+@router.patch("/{int:transaction_id}", response={200: ResponseSchema[TransactionOut], 400: ResponseSchema})
 def update_transaction(request, transaction_id: int, payload: TransactionUpdateSchema):
     try:
         user = getattr(request, 'auth', None)
-        transaction_updated = TransactionService.process(action='update', transaction_id=transaction_id, payload=payload, user=user)
-        return SuccessResponse(data=transaction_updated, message=f"Updated transactions {transaction_id} of user {user.pk} successfully")
+        transaction_updated = TransactionService.process(action='update', transaction_id=transaction_id,
+                                                         payload=payload, user=user)
+        return SuccessResponse(data=transaction_updated,
+                               message=f"Updated transactions {transaction_id} of user {user.pk} successfully")
     except Exception as e:
         return BadRequestResponse(f'Updated transactions failed - {str(e)}')
 
@@ -52,7 +60,7 @@ def update_transaction(request, transaction_id: int, payload: TransactionUpdateS
 def delete_transaction(request, transaction_id: int):
     try:
         user = getattr(request, 'auth', None)
-        TransactionService.destroy(transaction_id, user = user)
+        TransactionService.destroy(transaction_id, user=user)
         return SuccessResponse(message=f"Transaction {transaction_id} deleted", success=True)
     except Exception as e:
         print('e', e)
