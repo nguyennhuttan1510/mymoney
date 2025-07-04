@@ -71,7 +71,7 @@ def update_budget(request, budget_id: int, payload: BudgetUpdate):
 @router.delete("/ids", response=ResponseSchema)
 def delete_budget(request, payload: BudgetDeleteIn):
     try:
-        BudgetService.delete_budget(budget_ids=payload.ids, user_id=request.auth.pk)
+        BudgetService.delete_budget(payload, user_id=request.auth.pk)
         return SuccessResponse(message=f"Delete budget {payload.ids.__str__()} successfully")
     except ObjectDoesNotExist:
         raise NotFound(f'Not found budget')

@@ -4,7 +4,7 @@ from django.db.models import Q
 from ninja import Query
 
 from budget.models import Budget
-from budget.schema import BudgetQueryParam
+from budget.schema import BudgetQueryParam, BudgetDeleteIn
 from utils.query_builder import Specification, QueryBuilder
 from utils.repository import Repository, T
 
@@ -12,17 +12,27 @@ class BudgetSpecification(Specification[Budget]):
     def __init__(self, params: Query[BudgetQueryParam]):
         self.params = params
         self.builder = QueryBuilder()
+
     def is_satisfied(self) -> Q:
         params_dict = self.params.model_dump(exclude_unset=True, exclude={'wallets', 'categories'})
         # build base query
-        for k, v in params_dict.items():
-            if isinstance(v, list): pass
-            self.builder.add_condition(k, v)
+        self.base_query(params_dict, builder=self.builder)
         # build a relationship query
         if self.params.wallets:
             self.builder.add_relation_condition('wallet', self.params.wallets)
         if self.params.categories:
             self.builder.add_relation_condition('category', self.params.categories)
+        return self.builder.build()
+
+
+class BudgetDeleteSpecification(Specification[Budget]):
+    def __init__(self, params: BudgetDeleteIn):
+        self.params = params
+        self.builder = QueryBuilder()
+
+    def is_satisfied(self) -> Q:
+        if self.params.ids:
+            self.builder.add_relation_condition('pk', self.params.ids)
         return self.builder.build()
 
 

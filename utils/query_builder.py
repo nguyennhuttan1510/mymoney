@@ -6,6 +6,13 @@ from django.db.models import Q
 T = TypeVar('T')
 
 class Specification(Generic[T], ABC):
+    @staticmethod
+    def base_query(params_dict, builder: 'QueryBuilder'):
+        for k, v in params_dict.items():
+            if isinstance(v, list): pass
+            builder.add_condition(k, v)
+        return builder
+
     @abstractmethod
     def is_satisfied(self) -> Q:
         pass

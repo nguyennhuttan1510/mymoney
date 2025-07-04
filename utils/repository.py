@@ -33,7 +33,7 @@ class Repository(Generic[T]):
         instance.save()
         return instance
 
-    def delete(self, instances: T):
+    def delete(self, instances: QuerySet[T]):
         return instances.delete()
 
 

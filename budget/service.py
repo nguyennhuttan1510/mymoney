@@ -5,8 +5,8 @@ from django.db import transaction as transaction_db
 from django.db.models import Sum
 
 from budget.models import Budget
-from budget.repository import BudgetRepository
-from budget.schema import BudgetIn, BudgetUpdate, BudgetOutWithCalculate, BudgetOut, CalculatorBudget
+from budget.repository import BudgetRepository, BudgetDeleteSpecification
+from budget.schema import BudgetIn, BudgetUpdate, BudgetOutWithCalculate, BudgetOut, CalculatorBudget, BudgetDeleteIn
 from core.schema.service_abstract import ServiceAbstract
 from enums.budget import BudgetStatus
 from transaction.schema import TransactionQueryParams
@@ -49,9 +49,10 @@ class BudgetService(ServiceAbstract):
         return cls.repository.update(instance=instance, data=update_data)
 
     @classmethod
-    def delete_budget(cls, budget_ids: list[int], user_id: int):
-        instances = cls.repository.filter(pk__in=budget_ids)
-        return cls.repository.delete(instances)
+    def delete_budget(cls, payload: BudgetDeleteIn, user_id: int):
+        specification = BudgetDeleteSpecification(params=payload)
+        qs = cls.repository.filter(specification)
+        return cls.repository.delete(qs)
 
     @classmethod
     def calculate_budget(cls, budget: Budget) -> CalculatorBudget:
