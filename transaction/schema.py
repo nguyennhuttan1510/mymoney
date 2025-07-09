@@ -15,9 +15,10 @@ class TransactionOut(ModelSchema):
 
 
 class GroupByTransaction(BaseModel):
+    id: int = None
+    name: str = None
     count: int = None
     total: float = None
-    name: str = None
 
 
 class TransactionListOut(BaseModel):
@@ -54,8 +55,8 @@ class TransactionUpdateSchema(Schema):
 class TransactionQueryParams(BaseModel):
     categories: list[int] = None
     wallets: list[int] = None
-    start_date: str = None
-    end_date: str = None
+    start_date: datetime = None
+    end_date: datetime = None
     budget_id: int | None = Field(default=None,
                                   exclude=True)  # must be set Field(...,exclude=True) with field that is use handle logic ex: budget_id
     group_by: Literal['category', 'wallet'] | None = Field(default=None, exclude=True)

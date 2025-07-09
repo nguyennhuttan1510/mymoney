@@ -1,12 +1,12 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, BadRequest
-from ninja import PatchDict
+from ninja import PatchDict, Query
 from category.models import Category
 from core.schema.service_abstract import ServiceAbstract
 from enums.transaction import TransactionType
 from wallet.models import Wallet
 from wallet.repository import WalletRepository
-from wallet.schema import WalletIn
+from wallet.schema import WalletIn, WalletParam
 
 
 class WalletService(ServiceAbstract):
@@ -34,11 +34,11 @@ class WalletService(ServiceAbstract):
 
     @classmethod
     def destroy(cls, wallet_id: int, user: User):
-        instance = cls.get_wallet(wallet_id=wallet_id, user=user)
+        instance = cls.get_wallet_by_id(wallet_id=wallet_id, user=user)
         return instance.delete()
 
     @classmethod
-    def get_wallet(cls, wallet_id: int, user: User):
+    def get_wallet_by_id(cls, wallet_id: int, user: User):
         try:
             return cls.repository.get_by_id(pk=wallet_id, user_id=user.pk)
         except ObjectDoesNotExist:
@@ -46,11 +46,15 @@ class WalletService(ServiceAbstract):
 
     @classmethod
     def update(cls, wallet_id: int, data: PatchDict[WalletIn], user: User):
-        instance = cls.get_wallet(wallet_id=wallet_id, user=user)
+        instance = cls.get_wallet_by_id(wallet_id=wallet_id, user=user)
         return cls.repository.update(instance=instance, data=data)
 
     @classmethod
-    def _validate_unique_name_wallet(cls, wallet_name: str, user_id: int):
-        exist = cls.repository.filter(name=wallet_name, user__id=user_id).exists()
+    def search(cls, query: Query[WalletParam]):
+        return cls.repository.search(query)
+
+    @classmethod
+    def _validate_unique_name_wallet(cls, *args, **kwargs):
+        exist = cls.repository.check_existed(*args, **kwargs)
         if exist:
             raise ValueError('wallet name existed')

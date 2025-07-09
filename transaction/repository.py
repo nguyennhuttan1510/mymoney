@@ -1,6 +1,6 @@
 from typing import List, Literal
 
-from django.db.models import Q, Model, QuerySet, Sum, Count
+from django.db.models import Q, Model, QuerySet, Sum, Count, F
 from ninja import Query
 
 from transaction.models import Transaction
@@ -36,14 +36,17 @@ class TransactionRepository(Repository):
         return self.filter(specification)
 
     @staticmethod
-    def group_by(query:QuerySet[Transaction], group_by: Literal['category', 'wallet']= 'category') -> list[
+    def group_by(query:QuerySet[Transaction], group_by: Literal['category', 'wallet'] | None = 'category') -> list[
         GroupByTransaction]:
-        calc = query.values(group_by, 'category__name', 'wallet__name').annotate(
+        calc = query.values(group_by).annotate(
+            id=F(group_by),
+            name=F(group_by+'__name'),
             total=Sum('amount'),
             count=Count('id')
         )
-        result: list[GroupByTransaction] = list(calc)
-        return result
+        return list(calc)
+        # result = [GroupByTransaction(total=obj['total'], count=obj['count'], name=obj['name'], id=obj[group_by]) for obj in list(calc)]
+        # return result
 
     @staticmethod
     def sum_amount(query: QuerySet[Transaction]):

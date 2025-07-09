@@ -30,8 +30,8 @@ def create_wallet(request, payload: WalletIn):
 def get_wallets(request, filters: Query[WalletParam]):
     try:
         print('filters', filters.dict())
-        wallet = WalletService.repository.get_all_for_user(user_id=request.auth.pk, **filters.dict(exclude_unset=True))
-        return SuccessResponse(data=wallet, message="Get wallet successfully")
+        wallets = WalletService.search(filters)
+        return SuccessResponse(data=wallets, message="Get wallet successfully")
     except ObjectDoesNotExist:
         raise NotFound("Wallet not found")
     except Exception as e:
@@ -41,7 +41,7 @@ def get_wallets(request, filters: Query[WalletParam]):
 @router.get('/{int:wallet_id}', response={200: ResponseSchema[WalletOut]})
 def get_wallet(request, wallet_id:int):
     try:
-        wallet = WalletService.get_wallet(wallet_id=wallet_id, user=request.auth)
+        wallet = WalletService.get_wallet_by_id(wallet_id=wallet_id, user=request.auth)
         return SuccessResponse(data=wallet, message="Get wallet successfully")
     except ObjectDoesNotExist:
         raise NotFound("Wallet not found")
