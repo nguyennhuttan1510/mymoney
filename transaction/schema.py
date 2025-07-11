@@ -1,18 +1,26 @@
 from datetime import datetime
-from typing import Optional, Union, Literal, Any
+from typing import Optional, Literal
 from ninja import ModelSchema, Schema
-from pydantic import Field, BaseModel, field_serializer, computed_field
+from pydantic import Field, BaseModel, computed_field
 
+from category.schema import CategoryOut
 from transaction.models import Transaction
+from wallet.schema import WalletOut
 
 
-class TransactionOut(ModelSchema):
-    amount: int
+class TransactionOut(BaseModel):
+    id: int
+    amount: float
+    wallet: int
+    note: str
+    category: int
+    transaction_date: datetime
 
-    class Meta:
-        model = Transaction
-        fields = ['id', 'budget', 'wallet', 'amount', 'note', 'category', 'transaction_date']
-
+class TransactionReportGenerate(BaseModel):
+    amount: float
+    wallet: WalletOut
+    category: CategoryOut
+    transaction_date: datetime
 
 class GroupByTransaction(BaseModel):
     id: int = None

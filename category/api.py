@@ -7,13 +7,13 @@ from rest_framework.exceptions import NotFound
 
 from category.models import Category
 from typing import List
-from category.schema import CategorySchema
+from category.schema import CategoryOut
 from core.schema.response import BaseResponse, ResponseSchema
 from services.auth_jwt import JWTAuth
 
 router = Router(tags=['Category'], auth=JWTAuth())
 
-@router.get("/", response=ResponseSchema[List[CategorySchema]])
+@router.get("/", response=ResponseSchema[List[CategoryOut]])
 def get_category(request):
     try:
         categories =  Category.objects.filter(Q(is_default=True) | Q(user__pk=request.user.pk))
@@ -21,7 +21,7 @@ def get_category(request):
     except Exception as e:
         raise HTTPException(str(e))
 
-@router.get("/{int:category_id}", response=ResponseSchema[CategorySchema])
+@router.get("/{int:category_id}", response=ResponseSchema[CategoryOut])
 def get_category_by_id(request, category_id:int):
     try:
         category = Category.objects.get(Q(id=category_id) & Q(user__pk=request.user.pk))
@@ -31,8 +31,8 @@ def get_category_by_id(request, category_id:int):
     except Exception as e:
         raise HTTPException(str(e))
 
-@router.post('/', response=ResponseSchema[CategorySchema])
-def create_category(request, payload: CategorySchema):
+@router.post('/', response=ResponseSchema[CategoryOut])
+def create_category(request, payload: CategoryOut):
     try:
         user = getattr(request, 'user')
         category = Category.objects.create(**payload.dict())

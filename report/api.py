@@ -16,15 +16,13 @@ def report_by(request, filters: Query[ReportIn]):
     builder = CategoryReportBuilder(params=TransactionQueryParams(start_date=filters.start_date, end_date=filters.end_date))
     ReportService.construct_report_category(builder)
     report = builder.build()
-    return SuccessResponse(data=report, message='Report category success')
+    return SuccessResponse(data=report.model_dump(), message='Report category success')
 
-    # wallet = Wallet.objects.get(id=wallet_id, user=request.user)
-    # transactions = wallet.transactions.all()
-    # wallet_transactions = {
-    #     "wallet": wallet,
-    #     "transactions": transactions
-    # }
-    # return wallet_transactions
+@router.get('/reports/generate', response=ResponseSchema[ReportOut])
+def generate_report(request, filters: Query[ReportIn]):
+    builder = CategoryReportBuilder(params=TransactionQueryParams(start_date=filters.start_date, end_date=filters.end_date))
+    ReportService.construct_report_category(builder)
+    return ReportService.handle_report(builder, user=request.auth)
 
 @router.get('/budget-transactions/{int:budget_id}', response=ResponseSchema[ResponseBudgetTransaction])
 def get_budget_transactions(request, budget_id: int):

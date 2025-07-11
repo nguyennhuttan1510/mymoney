@@ -7,12 +7,11 @@ from enums.wallet import WalletType
 from wallet.models import Wallet
 
 
-class WalletOut(ModelSchema):
-    balance:int
-
-    class Meta:
-        model = Wallet
-        fields = ['id', 'balance', 'type', 'name']
+class WalletOut(BaseModel):
+    id: int
+    name: str
+    balance: float
+    type: WalletType
 
 
 class WalletIn(ModelSchema):

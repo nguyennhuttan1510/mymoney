@@ -5,13 +5,13 @@ from ninja import ModelSchema, Schema
 from pydantic import Field, BaseModel
 
 from budget.models import Budget
-from category.schema import CategorySchema
+from category.schema import CategoryOut
 from enums.budget import BudgetStatus
 from wallet.schema import WalletOut, WalletIn
 
 
 class BudgetOut(ModelSchema):
-    categories: list[CategorySchema] = Field(..., alias='category')
+    categories: list[CategoryOut] = Field(..., alias='category')
     wallets: list[WalletOut] = Field(..., alias='wallet')
     amount: float
     start_date: datetime

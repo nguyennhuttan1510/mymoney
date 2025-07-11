@@ -17,7 +17,7 @@ class ReportBuilder(Generic[T], ABC):
     #     self.data = data
 
     @abstractmethod
-    def set_raw_data(self) -> 'ReportBuilder[T]':
+    def set_transactions(self) -> 'ReportBuilder[T]':
         pass
 
     @abstractmethod
@@ -42,11 +42,15 @@ class CategoryReportBuilder(ReportBuilder[ReportOut]):
         self.params = params
         self.qs = self.repository.get_all_for_user(params=params)
         self._result: ReportOut = ReportOut(start_date=params.start_date, end_date=params.end_date)
+        self._set_field_base()
+
+    def _set_field_base(self):
         self._result.total = self.repository.sum_amount(self.qs)
         self._result.count_transaction = self.qs.count()
 
-    def set_raw_data(self):
-        pass
+    def set_transactions(self):
+        self._result.transactions = self.qs
+        return self
 
     def set_wallet(self):
         self._result.wallets = [
@@ -70,4 +74,4 @@ class CategoryReportBuilder(ReportBuilder[ReportOut]):
         return round((float(part)/float(total)) * 100, 2)
 
     def build(self):
-        return self._result.model_dump()
+        return self._result
