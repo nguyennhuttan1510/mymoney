@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django.http import HttpResponse
 from openpyxl.reader.excel import load_workbook
+from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from typing_extensions import TypeVar, Generic, List
 
@@ -17,11 +18,7 @@ class ReportTemplateAbstract(Generic[T], ABC):
         pass
 
     @abstractmethod
-    def handle_data(self, file, data: [T]):
-        pass
-
-    @abstractmethod
-    def initial_file(self, path_file: str):
+    def handle_data(self):
         pass
 
     @abstractmethod
@@ -31,45 +28,42 @@ class ReportTemplateAbstract(Generic[T], ABC):
 
 
 class TransactionReportTemplate(ReportTemplateAbstract):
+    TEMPLATE_PATH = 'report_monthly.xlsx'
+    wb: Workbook
+    ws: Worksheet
     def __init__(self, data: ReportOut):
         self.data = data
+        self.open_file_template(self.TEMPLATE_PATH)
+        self.handle_data()
 
     def export(self):
-        path = self.open_file_template('report-template.xlsx')
-        wb = self.initial_file(path)
-        ws = wb.active
-        ws.title = 'Transaction Report'
-        self.handle_data(ws, data=self.data)
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         filename = f"transactions_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         response["Content-Disposition"] = f"attachment; filename={filename}"
-        wb.save(response)
+        self.wb.save(response)
         return response
 
 
-    def open_file_template(self, file_name: str) -> str:
-        return os.path.join('templates', file_name)
+    def open_file_template(self, file_name: str):
+        TEMPLATE_PATH = os.path.join('templates', file_name)
+        self.wb = load_workbook(TEMPLATE_PATH)
+        self.ws = self.wb.active
+        self.ws.title = 'Transaction Report'
 
-    def initial_file(self, path_file):
-        # path_file = self.open_file_template('report-template.xlsx')
-        wb = load_workbook(path_file)
-        return wb
-
-    def handle_data(self, ws: Worksheet, data: ReportOut):
+    def handle_data(self):
         headers = ['ID', 'Wallet', 'Category', 'Amount', 'Date']
-        ws.append(headers)
+        self.ws.append(headers)
 
-        for tx in data.transactions:
-            ws.append([
+        for tx in self.data.transactions:
+            self.ws.append([
                 tx.id,
                 tx.wallet.name,
                 tx.category.name,
                 tx.amount,
                 None
             ])
-        return ws
 
 
 
