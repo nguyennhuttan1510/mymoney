@@ -49,21 +49,20 @@ class TransactionReportTemplate(ReportTemplateAbstract):
     def open_file_template(self, file_name: str):
         TEMPLATE_PATH = os.path.join('templates', file_name)
         self.wb = load_workbook(TEMPLATE_PATH)
-        self.ws = self.wb.active
-        self.ws.title = 'Transaction Report'
+        # self.ws.title = 'Transaction Report'
 
     def handle_data(self):
-        headers = ['ID', 'Wallet', 'Category', 'Amount', 'Date']
-        self.ws.append(headers)
+        # headers = ['ID', 'Wallet', 'Category', 'Amount', 'Date']
+        # self.ws.append(headers)
+        self.ws = self.wb.worksheets[1]
 
-        for tx in self.data.transactions:
-            self.ws.append([
-                tx.id,
-                tx.wallet.name,
-                tx.category.name,
-                tx.amount,
-                None
-            ])
+
+        start_row = 5
+        for idx, tx in enumerate(self.data.transactions, start=start_row):
+            self.ws.cell(row=idx, column=2).value = tx.transaction_date.strftime("%d/%m/%Y %H:%M")
+            self.ws.cell(row=idx, column=3).value = tx.amount
+            self.ws.cell(row=idx, column=4).value = tx.note
+            self.ws.cell(row=idx, column=5).value = tx.category.name
 
 
 
