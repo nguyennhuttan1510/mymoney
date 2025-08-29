@@ -8,17 +8,20 @@ from transaction.models import Transaction
 from wallet.schema import WalletOut
 
 
-class TransactionOut(BaseModel):
+class TransactionOut(Schema):
     id: int
     amount: float
-    wallet: int
-    note: str
-    category: int
+    wallet: int = Field(..., alias='wallet.id')
+    note: str | None = None
+    category: int = Field(..., alias='category.id')
     transaction_date: datetime
 
-class TransactionReportGenerate(BaseModel):
+    # class Config:
+    #     from_attributes = True
+
+class TransactionReportGenerate(Schema):
     amount: float
-    wallet: WalletOut
+    wallet: str = Field(..., alias='wallet.name')
     category: CategoryOut
     transaction_date: datetime
 

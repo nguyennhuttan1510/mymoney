@@ -12,13 +12,16 @@ class ResponseSchema(Schema, Generic[T]):
     message: str = None
     success: bool = True
 
+    class Config:
+        from_attributes = True
+
 
 class BaseResponse:
     http_status: int = None
     success: bool = None
     message: Optional[str] = None
 
-    def __new__(cls, message: str = None, data: Optional[Any] = None, success=True):
+    def __new__(cls, message: str = None, data: Optional[T] = None, success=True):
         if cls.http_status is None:
             raise NotImplemented
         return cls.http_status, ResponseSchema(data=data, message=message or cls.message,

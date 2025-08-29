@@ -4,7 +4,7 @@
     <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredPackages">
         <value>
-          <list size="7">
+          <list size="10">
             <item index="0" class="java.lang.String" itemvalue="dotenv" />
             <item index="1" class="java.lang.String" itemvalue="python-dotenv" />
             <item index="2" class="java.lang.String" itemvalue="pytest" />
@@ -12,6 +12,9 @@
             <item index="4" class="java.lang.String" itemvalue="pytest-django" />
             <item index="5" class="java.lang.String" itemvalue="pluggy" />
             <item index="6" class="java.lang.String" itemvalue="packaging" />
+            <item index="7" class="java.lang.String" itemvalue="httpx" />
+            <item index="8" class="java.lang.String" itemvalue="h11" />
+            <item index="9" class="java.lang.String" itemvalue="tzdata" />
           </list>
         </value>
       </option>

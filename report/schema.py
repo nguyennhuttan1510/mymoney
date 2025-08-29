@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 
+from ninja import Schema
 from pydantic import BaseModel, Field
 
 from budget.schema import BudgetOut
@@ -38,10 +39,10 @@ class ReportOut(BaseModel):
     count_transaction: int | None = None
 
 
-class ResponseBudgetTransaction(BaseModel):
+class ResponseBudgetTransaction(Schema):
     budget: BudgetOut
-    transactions: List[TransactionReportGenerate]
+    transactions: list[TransactionReportGenerate]
     spent: int
     remaining: int
-    percentage_spent: int
-    percentage_remaining: int
+    percentage_spent: float
+    percentage_remaining: float

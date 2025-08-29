@@ -14,3 +14,5 @@ class Budget(Datetime):
     end_date = models.DateField(null=True, blank=True)
     wallet = models.ManyToManyField(Wallet)
     category = models.ManyToManyField(Category)
+    # is_event = models.BooleanField(default=False)
+

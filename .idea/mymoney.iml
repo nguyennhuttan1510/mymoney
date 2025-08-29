@@ -2,7 +2,7 @@
 <module type="WEB_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python facet">
-      <configuration sdkName="Python 3.13 (mymoney)" />
+      <configuration sdkName="Python 3.13 virtualenv at C:\Users\GROOO0025\Desktop\projects\mymoney-project\mymoney-api\.venv" />
     </facet>
   </component>
   <component name="NewModuleRootManager">
@@ -14,6 +14,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Python 3.13 (mymoney) interpreter library" level="application" />
+    <orderEntry type="library" name="Python 3.13 virtualenv at C:\Users\GROOO0025\Desktop\projects\mymoney-project\mymoney-api\.venv interpreter library" level="application" />
   </component>
 </module>

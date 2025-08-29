@@ -10,29 +10,23 @@ from enums.budget import BudgetStatus
 from wallet.schema import WalletOut, WalletIn
 
 
-class BudgetOut(ModelSchema):
+class BudgetOut(Schema):
+    id: int
     categories: list[CategoryOut] = Field(..., alias='category')
     wallets: list[WalletOut] = Field(..., alias='wallet')
     amount: float
+    description: str | None = None
     start_date: datetime
     end_date: datetime
 
-    class Meta:
-        model = Budget
-        fields = ['id', 'amount', 'description', 'start_date', 'end_date']
 
-
-class BudgetIn(ModelSchema):
+class BudgetIn(BaseModel):
     name: str
     amount: float
-    wallet: list[int] = Field(..., alias='wallets')
-    category: list[int] = Field(..., alias='categories')
+    wallet: list[int] | None = Field(default=None, alias='wallets')
+    category: list[int] | None = Field(default=None, alias='categories')
     start_date: datetime = Field(default=datetime.now())
     end_date: datetime = Field(default=datetime.now())
-
-    class Meta:
-        model = Budget
-        fields = ['wallet', 'amount', 'category', 'start_date', 'end_date']
 
 
 class BudgetUpdate(Schema):

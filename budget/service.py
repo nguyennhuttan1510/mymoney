@@ -19,7 +19,7 @@ class BudgetService(ServiceAbstract):
     @classmethod
     def create_budget(cls, payload: BudgetIn):
         try:
-            instance = cls.repository.create(payload.model_dump())
+            instance = cls.repository.create(payload.model_dump(exclude_none=True))
             return instance
         except Exception as e:
             print('error', e)

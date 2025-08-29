@@ -4,11 +4,13 @@ from budget.models import Budget
 from category.models import Category
 from django.contrib.auth.models import User
 
+from enums.transaction import TransactionType
+from enums.wallet import WalletType
 from transaction.models import Transaction
 from wallet.models import Wallet
 
-def create_wallet(name="Default Wallet", balance=0, user=None) -> Wallet:
-    return Wallet.objects.create(user=user, name=name, balance=balance)
+def create_wallet(name="Default Wallet", balance=0, user=None, type: WalletType = WalletType.CASH.value) -> Wallet:
+    return Wallet.objects.create(user=user, name=name, balance=balance, type=type)
 
 def create_user(username="admin", password="o0i9u8y7", **extra_field):
     return User.objects.create_user(username=username, password=password, **extra_field)

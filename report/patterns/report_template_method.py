@@ -28,7 +28,7 @@ class ReportTemplateAbstract(Generic[T], ABC):
 
 
 class TransactionReportTemplate(ReportTemplateAbstract):
-    TEMPLATE_PATH = 'report_monthly.xlsx'
+    TEMPLATE_PATH = 'report_transaction.xlsx'
     wb: Workbook
     ws: Worksheet
     def __init__(self, data: ReportOut):
@@ -51,11 +51,8 @@ class TransactionReportTemplate(ReportTemplateAbstract):
         self.wb = load_workbook(TEMPLATE_PATH)
         # self.ws.title = 'Transaction Report'
 
-    def handle_data(self):
-        # headers = ['ID', 'Wallet', 'Category', 'Amount', 'Date']
-        # self.ws.append(headers)
+    def _handle_data_transaction(self):
         self.ws = self.wb.worksheets[1]
-
 
         start_row = 5
         for idx, tx in enumerate(self.data.transactions, start=start_row):
@@ -63,6 +60,20 @@ class TransactionReportTemplate(ReportTemplateAbstract):
             self.ws.cell(row=idx, column=3).value = tx.amount
             self.ws.cell(row=idx, column=4).value = tx.note
             self.ws.cell(row=idx, column=5).value = tx.category.name
+
+    def _handle_data_overview(self):
+        self.ws = self.wb.worksheets[0]
+
+        start_row = 28
+        for idx, category in enumerate(self.data.categories, start=start_row):
+            self.ws.cell(row=idx, column=2).value = category.name
+            self.ws.cell(row=idx, column=5).value = category.total
+
+    def handle_data(self):
+        # headers = ['ID', 'Wallet', 'Category', 'Amount', 'Date']
+        # self.ws.append(headers)
+        self._handle_data_overview()
+        self._handle_data_transaction()
 
 
 

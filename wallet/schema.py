@@ -1,13 +1,12 @@
 from ninja import ModelSchema, Field, Schema
 from pydantic import BaseModel, field_validator
-from pydantic.v1 import validator
 
 from enums.transaction import TransactionType
 from enums.wallet import WalletType
 from wallet.models import Wallet
 
 
-class WalletOut(BaseModel):
+class WalletOut(Schema):
     id: int
     name: str
     balance: float
