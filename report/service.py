@@ -60,7 +60,6 @@ class ReportService:
                     "username": "Nguyễn Nhựt Tân",
                     "month": 8
                 },
-                "file":
             }
         }
         try:

@@ -16,7 +16,7 @@ class ResponseSchema(Schema, Generic[T]):
         from_attributes = True
 
 
-class BaseResponse:
+class BaseResponse(Generic[T]):
     http_status: int = None
     success: bool = None
     message: Optional[str] = None

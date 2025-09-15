@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'reminder',
     'saving',
     'wallet',
-    'report'
+    'report',
+    'user_provider'
 ]
 
 
@@ -72,6 +73,19 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'mymoney.urls'
+
+OAUTH_PROVIDERS = {
+    "google": {
+        "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+        "client_secret": os.getenv('GOOGLE_CLIENT_SECRET'),
+        "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth",
+        "access_token_url": "https://oauth2.googleapis.com/token",
+        "userinfo_url": "https://openidconnect.googleapis.com/v1/userinfo",
+        "redirect_uri": "http://127.0.0.1:8000/api/auth/google/callback",
+        "scope": "openid email profile",
+        "server_metadata_url": "https://accounts.google.com/.well-known/openid-configuration",
+    }
+}
 
 TEMPLATES = [
     {
