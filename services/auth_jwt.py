@@ -22,7 +22,7 @@ class JWTAuth(HttpBearer):
             print('user', user)
             print('validated_token', validated_token['session_id'])
             session = AuthService.validate_session(validated_token['session_id'])
-            return user, session
+            return user
 
         except Exception as e:
             raise AuthenticationFailed(str(e) or 'Invalid token')

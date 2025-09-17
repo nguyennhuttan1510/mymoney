@@ -4,6 +4,7 @@ from typing import Dict, Type, Any
 from uuid import uuid4
 
 from django.contrib.auth import authenticate, login
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from django.contrib.auth.models import User
@@ -120,16 +121,26 @@ class AuthService:
         if not session_id:
             raise Exception('Session id is required')
 
+        session = None
+
         try:
             session = Session.objects.get(session_id=session_id)
+            if not session.is_active:
+                raise Exception('Session inactive')
+
+            if not session.expires_at:
+                raise Exception('Session not found expired_at')
+            print('session.expires_at', session.expires_at, timezone.now(), session.expires_at <= timezone.now())
+
+            if session.expires_at <= timezone.now():
+                raise Exception('Session expired')
+
         except Session.DoesNotExist:
             raise Exception('Session not found')
 
-        if not session.is_active:
-            raise Exception('Session inactive')
-
-        if session.expires_at >= datetime.now():
-            raise Exception('Session expired')
+        except Exception as e:
+            cls._revoke_session(session, note='revoked due to session error')
+            raise e
 
         return session
 
@@ -159,16 +170,26 @@ class AuthService:
 
     @classmethod
     def _get_user_provider(cls, user_provider: UserProviderIn):
-        return cls.repository_provider.model.objects.select_for_update().get(provider=user_provider.provider_name, provider_account_id=user_provider.provider_account_id)
+        return cls.repository_provider.model.objects.select_for_update().get(provider=user_provider.provider, provider_account_id=user_provider.provider_account_id)
 
     @classmethod
     def _update_user_provider(cls, instance, user_dict) -> UserProvider:
         try:
-            user = cls.repository_provider.update(instance, **user_dict)
+            user = cls.repository_provider.update(instance, user_dict)
             return user
         except Exception as e:
             print('Update user provider error', e)
             raise e
+
+    @classmethod
+    def _revoke_session(cls, session: Session, note=None):
+        if not session:
+            return
+        session.is_active = False
+        session.revoked_at = datetime.now()
+        session.note = note
+        session.save()
+
 
     @classmethod
     def login_process(cls, payload, request):
@@ -177,8 +198,8 @@ class AuthService:
             raise AuthenticationFailed('Invalid username or password')
         login(request, user)
 
-        other_session = Session.objects.filter(user=user, is_active=True)
-        other_session.update(is_active=False, revoked_at=timezone.now(), note='revoked due to new login')
+        other_session = Session.objects.filter(user=user, is_active=True).first()
+        cls._revoke_session(session=other_session, note='revoked due to new login')
 
         session = cls._create_session({"user":user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
 

@@ -1,4 +1,6 @@
 import uuid
+from datetime import timedelta
+from django.utils import timezone
 
 from django.conf import settings
 from django.db import models
@@ -20,3 +22,10 @@ class Session(models.Model):
         indexes = [
             models.Index(fields=["user", "is_active"]),
         ]
+
+    def __str__(self):
+        return self.session_id
+
+    def save(self, **kwargs):
+        self.expires_at = timezone.now() + timedelta(minutes=settings.SESSION_EXPIRE_MINUTES)
+        super().save(**kwargs)
