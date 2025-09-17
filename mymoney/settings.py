@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'saving',
     'wallet',
     'report',
-    'user_provider'
+    'user_provider',
+    'session',
 ]
 
 

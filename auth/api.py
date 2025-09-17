@@ -11,17 +11,13 @@ from services.oauth import oauth, cfg
 from auth.schema import LoginSchema, RegisterSchema, RegisterResponseSchema, Token
 from core.exceptions.exceptions import BadRequest
 from core.schema.response import ResponseSchema, BaseResponse, SuccessResponse
-from services.auth_jwt import JWTAuth, CustomTokenObtainPairSerializer
+from services.auth_jwt import JWTAuth
 
 router = Router(tags=['Authentication'])
 
 @router.post("/login", response={200: ResponseSchema, 400: ResponseSchema})
 def login_user(request, payload: LoginSchema):
-    user = authenticate(username=payload.username, password=payload.password)
-    if not user:
-        raise AuthenticationFailed('Invalid username or password')
-    login(request, user)
-    res = AuthService.generate_token(user)
+    res = AuthService.login_process(payload, request)
     return SuccessResponse(data=res)
 
 
@@ -52,10 +48,6 @@ def provider_login(request):
 
 @router.get('/google/callback', response={200: ResponseSchema[Token]})
 def provider_callback(request):
-    token = oauth.google.authorize_access_token(request)
-    print('token', token)
-    provider = AuthService.get_provider('google')
-    user_internal = provider.upsert(token, token['userinfo'])
-    internal_token = AuthService.generate_token(user_internal)
-    # return SuccessResponse(data=internal_token)
-    return redirect(f'https://www.youtube.com/watch?v=8q2lBNbdsEo&list=RD8q2lBNbdsEo&start_radio=1&token={internal_token["access_token"]}')
+    res = AuthService.provider_onboard_process('google', request)
+    return SuccessResponse(data=res)
+    # return redirect(f'https://www.youtube.com/watch?v=8q2lBNbdsEo&list=RD8q2lBNbdsEo&start_radio=1&token={internal_token["access_token"]}')

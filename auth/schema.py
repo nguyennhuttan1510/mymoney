@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import Optional
 
@@ -35,5 +36,6 @@ class UserProviderIn(BaseModel):
     email: str
     email_verified: bool
 
-
-
+class PayloadToken(Schema):
+    session_id: uuid.UUID
+    email: str
