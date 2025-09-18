@@ -2,12 +2,9 @@ from abc import ABC, abstractmethod
 from ninja import Query
 from typing_extensions import Generic, TypeVar
 
-from category.models import Category
 from report.schema import ReportOut, WalletReport
-from tests.test_wallet_service import params
 from transaction.repository import TransactionRepository
 from transaction.schema import TransactionQueryParams
-from transaction.service import TransactionService
 
 T = TypeVar('T')
 

@@ -1,10 +1,7 @@
-from typing import List
 
 from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router, Query
 
-from tests.test_wallet_service import params
-from transaction.models import Transaction
 from transaction.service import TransactionService
 from core.schema.response import ResponseSchema, SuccessResponse, CreateSuccessResponse, BadRequestResponse, \
     NotFoundResponse

@@ -1,14 +1,11 @@
 from typing import Any, List
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction as transaction_db
-from django.db.models import Sum
 
 from budget.models import Budget
 from budget.repository import BudgetRepository, BudgetDeleteSpecification
-from budget.schema import BudgetIn, BudgetUpdate, BudgetOutWithCalculate, BudgetOut, CalculatorBudget, BudgetDeleteIn
+from budget.schema import BudgetIn, BudgetUpdate, BudgetOut, CalculatorBudget, BudgetDeleteIn
 from core.schema.service_abstract import ServiceAbstract
-from enums.budget import BudgetStatus
 from transaction.schema import TransactionQueryParams
 from transaction.service import TransactionService
 
@@ -56,14 +53,5 @@ class BudgetService(ServiceAbstract):
 
     @classmethod
     def calculate_budget(cls, budget: Budget) -> CalculatorBudget:
-        result = TransactionService.search(params=TransactionQueryParams(budget_id=budget.pk))
-        total_spent = result.total
-        usage_percent = int((float(total_spent)/float(budget.amount)) * 100)
-
-        if usage_percent > 100:
-            status = BudgetStatus.OVER
-        elif usage_percent >= 80:
-            status = BudgetStatus.WARNING
-        else:
-            status = BudgetStatus.OK
-        return CalculatorBudget(total_spent=total_spent, status=status, limit=budget.amount, usage_percent=usage_percent)
+        result = TransactionService.search(params=TransactionQueryParams(by_budget_id=budget.pk))
+        return CalculatorBudget(total_spent=result.total, limit=budget.amount)

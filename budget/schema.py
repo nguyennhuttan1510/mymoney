@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Union, List
 
 from ninja import ModelSchema, Schema
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, computed_field
 
 from budget.models import Budget
 from category.schema import CategoryOut
@@ -48,8 +48,26 @@ class BudgetQueryParam(Schema):
 class CalculatorBudget(BaseModel):
     total_spent: float
     limit: float  # the same amount
-    usage_percent: int
-    status: BudgetStatus
+
+    @computed_field
+    @property
+    def remaining(self) -> float:
+        return self.limit - self.total_spent
+
+    @computed_field
+    @property
+    def usage_percent(self) -> float:
+        return int((float(self.total_spent)/float(self.limit)) * 100)
+
+    @computed_field
+    @property
+    def status(self) -> BudgetStatus:
+        if self.usage_percent > 100:
+            return BudgetStatus.OVER
+        elif self.usage_percent >= 80:
+            return BudgetStatus.WARNING
+        else:
+            return BudgetStatus.OK
 
 
 class BudgetParam(BaseModel):

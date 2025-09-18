@@ -87,8 +87,8 @@ class TransactionService(ServiceAbstract):
     @classmethod
     def search(cls, params: TransactionQueryParams) -> TransactionListOut:
         group_by = None
-        if params.budget_id:
-            budget = BudgetRepository().get_by_id(pk=params.budget_id)
+        if params.by_budget_id:
+            budget = BudgetRepository().get_by_id(pk=params.by_budget_id)
             params.wallets = list(budget.wallet.values_list('id', flat=True))
             params.categories = list(budget.category.values_list('id', flat=True))
             params.start_date = budget.start_date

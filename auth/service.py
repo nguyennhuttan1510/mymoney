@@ -38,15 +38,15 @@ class ProviderAccountAbstract(ABC):
 
     @abstractmethod
     def login(self, request):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def get_token(self, request) -> dict[str, Any]:
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def get_user_provider(self, response_access: dict[str, Any]) -> UserProviderIn:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class GoogleProvider(ProviderAccountAbstract):

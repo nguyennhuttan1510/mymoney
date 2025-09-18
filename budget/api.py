@@ -40,13 +40,16 @@ def get_budgets(request, filters: Query[BudgetQueryParam]):
 @router.get("/{int:budget_id}", response={200: ResponseSchema, 422: ResponseSchema})
 def get_budget(request, budget_id: int, params: Query[BudgetParam]):
     try:
+        # Get budget instance once
+        instance = BudgetService.get_budget(budget_id=budget_id)
+
+        # Process based on is_calc parameter
         if params.is_calc:
-            instance = BudgetService.get_budget(budget_id=budget_id)
             budget = BudgetService.get_budget_with_calculate(instance)
             serialize = BudgetOutWithCalculate.model_validate(budget).model_dump()
         else:
-            budget = BudgetService.get_budget(budget_id=budget_id)
-            serialize = BudgetOut.model_validate(budget).model_dump()
+            serialize = BudgetOut.model_validate(instance).model_dump()
+
         return SuccessResponse(data=serialize, message="Get budget successfully")
 
     except ObjectDoesNotExist:

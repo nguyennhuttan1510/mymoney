@@ -68,8 +68,9 @@ class TransactionQueryParams(BaseModel):
     wallets: list[int] = None
     start_date: datetime = None
     end_date: datetime = None
-    budget_id: int | None = Field(default=None,
-                                  exclude=True)  # must be set Field(...,exclude=True) with field that is use handle logic ex: budget_id
+    budget: int | None = Field(default=None, description='Get transaction by budget')
+    by_budget_id: int | None = Field(default=None,
+                                  exclude=True, description='Only get transaction in budget')  # must be set Field(...,exclude=True) with field that is use handle logic ex: budget_id
     group_by: Literal['category', 'wallet'] | None = Field(default=None, exclude=True)
 
 

@@ -63,7 +63,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),               # Header kiểu Bearer
 }
 
-SESSION_EXPIRE_MINUTES=2
+SESSION_EXPIRE_MINUTES=3600
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
