@@ -45,7 +45,7 @@ class BudgetQueryParam(Schema):
     user_id: int = None
 
 
-class CalculatorBudget(BaseModel):
+class BudgetOutCalculate(BudgetOut):
     total_spent: float
     limit: float  # the same amount
 
@@ -77,6 +77,3 @@ class BudgetParam(BaseModel):
 class BudgetDeleteIn(BaseModel):
     ids: list[int]
 
-
-class BudgetOutWithCalculate(BudgetOut, CalculatorBudget):
-    pass

@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from budget.models import Budget
 from budget.repository import BudgetRepository, BudgetDeleteSpecification
-from budget.schema import BudgetIn, BudgetUpdate, BudgetOut, CalculatorBudget, BudgetDeleteIn
+from budget.schema import BudgetIn, BudgetUpdate, BudgetOut, BudgetOutCalculate, BudgetDeleteIn
 from core.schema.service_abstract import ServiceAbstract
 from transaction.schema import TransactionQueryParams
 from transaction.service import TransactionService
@@ -52,6 +52,6 @@ class BudgetService(ServiceAbstract):
         return cls.repository.delete(qs)
 
     @classmethod
-    def calculate_budget(cls, budget: Budget) -> CalculatorBudget:
+    def calculate_budget(cls, budget: Budget) -> BudgetOutCalculate:
         result = TransactionService.search(params=TransactionQueryParams(by_budget_id=budget.pk))
-        return CalculatorBudget(total_spent=result.total, limit=budget.amount)
+        return BudgetOutCalculate(total_spent=result.total, limit=budget.amount)

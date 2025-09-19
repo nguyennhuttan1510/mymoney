@@ -8,6 +8,7 @@ from transaction.schema import TransactionQueryParams
 
 T = TypeVar('T')
 
+
 class ReportBuilder(Generic[T], ABC):
     # def __init__(self, data: list[T]):
     #     self.result: T = None
@@ -35,6 +36,7 @@ class ReportBuilder(Generic[T], ABC):
 
 class CategoryReportBuilder(ReportBuilder[ReportOut]):
     repository = TransactionRepository()
+
     def __init__(self, params: Query[TransactionQueryParams]):
         self.params = params
         self.qs = self.repository.get_all_for_user(params=params)
@@ -51,14 +53,16 @@ class CategoryReportBuilder(ReportBuilder[ReportOut]):
 
     def set_wallet(self):
         self._result.wallets = [
-            WalletReport.model_validate(obj={**obj, 'percent':self._calculate_percent(self._result.total, obj['total'])})
+            WalletReport.model_validate(
+                obj={**obj, 'percent': self._calculate_percent(self._result.total, obj['total'])})
             for obj in self.repository.group_by(self.qs, 'wallet')
         ]
         return self
 
     def set_category(self):
         self._result.categories = [
-            WalletReport.model_validate(obj={**obj, 'percent':self._calculate_percent(self._result.total, obj['total'])})
+            WalletReport.model_validate(
+                obj={**obj, 'percent': self._calculate_percent(self._result.total, obj['total'])})
             for obj in self.repository.group_by(self.qs, 'category')
         ]
         return self
@@ -68,7 +72,7 @@ class CategoryReportBuilder(ReportBuilder[ReportOut]):
 
     @staticmethod
     def _calculate_percent(total, part):
-        return round((float(part)/float(total)) * 100, 2)
+        return round((float(part) / float(total)) * 100, 2)
 
     def build(self):
         return self._result

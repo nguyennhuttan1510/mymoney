@@ -5,8 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router, Query, PatchDict
 from rest_framework.exceptions import NotFound
 
-from budget.schema import BudgetOut, BudgetIn, BudgetQueryParam, BudgetUpdate, BudgetOutWithCalculate, BudgetParam, \
-    BudgetDeleteIn
+from budget.schema import BudgetOut, BudgetIn, BudgetQueryParam, BudgetUpdate, BudgetParam, BudgetDeleteIn
 from budget.service import BudgetService
 from core.exceptions.exceptions import ValidateError
 from core.schema.response import ResponseSchema, CreateSuccessResponse, SuccessResponse
@@ -46,9 +45,9 @@ def get_budget(request, budget_id: int, params: Query[BudgetParam]):
         # Process based on is_calc parameter
         if params.is_calc:
             budget = BudgetService.get_budget_with_calculate(instance)
-            serialize = BudgetOutWithCalculate.model_validate(budget).model_dump()
+            # serialize = BudgetOutWithCalculate.model_validate(budget).model_dump()
         else:
-            serialize = BudgetOut.model_validate(instance).model_dump()
+            # serialize = BudgetOut.model_validate(instance).model_dump()
 
         return SuccessResponse(data=serialize, message="Get budget successfully")
 
