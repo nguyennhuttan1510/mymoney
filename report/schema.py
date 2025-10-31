@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from budget.schema import BudgetOut
 from enums.transaction import TransactionType
-from transaction.schema import TransactionReportGenerate
+from transaction.schema import TransactionReport
 from wallet.models import Wallet
 from wallet.schema import WalletOut
 
@@ -34,15 +34,7 @@ class ReportOut(BaseModel):
     end_date: datetime | None = None
     categories: list[CategoryReport] | None = None
     wallets: list[WalletReport] | None = None
-    transactions: list[TransactionReportGenerate] | None = None
+    transactions: list[TransactionReport] | None = None
     total: float | None = None
     count_transaction: int | None = None
 
-
-class ResponseBudgetTransaction(Schema):
-    budget: BudgetOut
-    transactions: list[TransactionReportGenerate]
-    spent: int
-    remaining: int
-    percentage_spent: float
-    percentage_remaining: float

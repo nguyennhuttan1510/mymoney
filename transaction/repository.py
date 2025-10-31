@@ -1,12 +1,13 @@
-from typing import List, Literal
+from typing import Literal
 
-from django.db.models import Q, Model, QuerySet, Sum, Count, F
+from django.db.models import Q, QuerySet, Sum, Count, F
 from ninja import Query
 
+from budget.repository import BudgetRepository
 from transaction.models import Transaction
 from transaction.schema import TransactionQueryParams, GroupByTransaction
 from utils.query_builder import Specification, QueryBuilder
-from utils.repository import Repository
+from core.dao.repository import Repository
 
 class TransactionSpecification(Specification[Transaction]):
     def __init__(self, params: Query[TransactionQueryParams]):
@@ -32,6 +33,13 @@ class TransactionRepository(Repository):
         super().__init__(model=Transaction)
 
     def get_all_for_user(self, params: Query[TransactionQueryParams]):
+        if params.by_budget_id:
+            budget = BudgetRepository().get_by_id(pk=params.by_budget_id)
+            params.wallets = list(budget.wallet.values_list('id', flat=True))
+            params.categories = list(budget.category.values_list('id', flat=True))
+            params.start_date = budget.start_date
+            params.end_date = budget.end_date
+
         specification = TransactionSpecification(params)
         return self.filter(specification)
 

@@ -1,7 +1,5 @@
-from abc import ABC
-from typing import Generic, TypeVar, Optional, Any
+from typing import Generic, TypeVar, Optional
 from ninja import Schema
-from pydantic import BaseModel
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 
 T = TypeVar('T')
@@ -19,13 +17,13 @@ class ResponseSchema(Schema, Generic[T]):
 class BaseResponse(Generic[T]):
     http_status: int = None
     success: bool = None
-    message: Optional[str] = None
+    message: str = None
 
-    def __new__(cls, message: str = None, data: Optional[T] = None, success=True):
+    def __new__(cls, message: Optional[str] = None, data: Optional[T] = None, success: Optional[bool] = None):
         if cls.http_status is None:
-            raise NotImplemented
+            raise NotImplementedError("BaseResponse cannot be used directly — subclass required.")
         return cls.http_status, ResponseSchema(data=data, message=message or cls.message,
-                                               success=success or cls.success)
+                                      success=success or cls.success)
 
 
 class SuccessResponse(BaseResponse):

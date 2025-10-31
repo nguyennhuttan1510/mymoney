@@ -33,8 +33,9 @@ class Repository(Generic[T]):
         instance.save()
         return instance
 
-    def delete(self, instances: QuerySet[T]):
-        return instances.delete()
+    def delete(self, pk:int):
+        instance = self.get_by_id(pk=pk)
+        return instance.delete()
 
 
 

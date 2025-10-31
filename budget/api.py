@@ -5,12 +5,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router, Query, PatchDict
 from rest_framework.exceptions import NotFound
 
+from budget.builder.budget import BudgetBuilder
+from budget.builder.director import Director
 from budget.schema import BudgetOut, BudgetIn, BudgetQueryParam, BudgetUpdate, BudgetParam, BudgetDeleteIn
 from budget.service import BudgetService
 from core.exceptions.exceptions import ValidateError
 from core.schema.response import ResponseSchema, CreateSuccessResponse, SuccessResponse
 from services.auth_jwt import JWTAuth
-from django.db import transaction as transaction_db
 
 router = Router(tags=['Budget'], auth=JWTAuth())
 
@@ -43,13 +44,10 @@ def get_budget(request, budget_id: int, params: Query[BudgetParam]):
         instance = BudgetService.get_budget(budget_id=budget_id)
 
         # Process based on is_calc parameter
-        if params.is_calc:
-            budget = BudgetService.get_budget_with_calculate(instance)
-            # serialize = BudgetOutWithCalculate.model_validate(budget).model_dump()
-        else:
-            # serialize = BudgetOut.model_validate(instance).model_dump()
-
-        return SuccessResponse(data=serialize, message="Get budget successfully")
+        builder = BudgetBuilder(instance)
+        director = Director(builder, params)
+        data = director.make()
+        return SuccessResponse(data=data, message="Get budget successfully")
 
     except ObjectDoesNotExist:
         raise NotFound(f"Budget with id {budget_id} does not exist")
@@ -77,5 +75,14 @@ def delete_budget(request, payload: BudgetDeleteIn):
         return SuccessResponse(message=f"Delete budget {payload.ids.__str__()} successfully")
     except ObjectDoesNotExist:
         raise NotFound(f'Not found budget')
+    except Exception as e:
+        raise HTTPException(str(e))
+
+
+@router.get("/{int:budget_id}/transactions", response={200: ResponseSchema, 422: ResponseSchema})
+def get_transaction_budget(request, budget_id:int):
+    try:
+        transactions = BudgetService.get_transactions(budget_id)
+        return SuccessResponse(data=transactions, message="Get transactions of budget successfully")
     except Exception as e:
         raise HTTPException(str(e))

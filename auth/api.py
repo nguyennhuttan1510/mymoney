@@ -18,7 +18,7 @@ router = Router(tags=['Authentication'])
 @router.post("/login", response={200: ResponseSchema, 400: ResponseSchema})
 def login_user(request, payload: LoginSchema):
     res = AuthService.login_process(payload, request)
-    return SuccessResponse(data=res)
+    return SuccessResponse(data=res, message="Login success")
 
 
 @router.post("/register", response={200: ResponseSchema[RegisterResponseSchema], 400: ResponseSchema})

@@ -1,7 +1,7 @@
 from django.db.models import Q
 from ninja import Query
 from utils.query_builder import Specification, QueryBuilder
-from utils.repository import Repository
+from core.dao.repository import Repository
 from wallet.models import Wallet
 from wallet.schema import WalletParam
 

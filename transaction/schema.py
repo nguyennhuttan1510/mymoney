@@ -19,7 +19,7 @@ class TransactionOut(Schema):
     # class Config:
     #     from_attributes = True
 
-class TransactionReportGenerate(Schema):
+class TransactionReport(Schema):
     amount: float
     wallet: str = Field(..., alias='wallet.name')
     category: CategoryOut

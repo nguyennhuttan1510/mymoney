@@ -27,12 +27,6 @@ class BudgetService(ServiceAbstract):
         return cls.repository.get_all_for_user(user_id=user_id, params=params)
 
     @classmethod
-    def get_budget_with_calculate(cls, instance: Budget) -> dict[Any, Any]:
-        calc = cls.calculate_budget(instance)
-        schema = BudgetOut.model_validate(instance).model_dump(by_alias=True)
-        return {**schema, **calc.model_dump()}
-
-    @classmethod
     def get_budget(cls, budget_id: int):
         try:
             return cls.repository.get_by_id(pk=budget_id)
@@ -52,6 +46,5 @@ class BudgetService(ServiceAbstract):
         return cls.repository.delete(qs)
 
     @classmethod
-    def calculate_budget(cls, budget: Budget) -> BudgetOutCalculate:
-        result = TransactionService.search(params=TransactionQueryParams(by_budget_id=budget.pk))
-        return BudgetOutCalculate(total_spent=result.total, limit=budget.amount)
+    def get_transactions(cls, budget_id: int):
+        return TransactionService.search(params=TransactionQueryParams(budget=budget_id))

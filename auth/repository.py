@@ -1,5 +1,5 @@
 from user_provider.models import UserProvider
-from utils.repository import Repository
+from core.dao.repository import Repository
 
 
 class UserProviderRepository(Repository[UserProvider]):

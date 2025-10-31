@@ -1,12 +1,12 @@
 from typing import Optional
 
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from ninja import Query
 
 from budget.models import Budget
 from budget.schema import BudgetQueryParam, BudgetDeleteIn
 from utils.query_builder import Specification, QueryBuilder
-from utils.repository import Repository, T
+from core.dao.repository import Repository, T
 
 class BudgetSpecification(Specification[Budget]):
     def __init__(self, params: Query[BudgetQueryParam]):
@@ -63,3 +63,7 @@ class BudgetRepository(Repository[Budget]):
             instance.wallet.set(wallets)
         super().update(instance, data)
         return instance
+
+    def delete(self, instance: QuerySet[T]):
+        instance.delete()
+

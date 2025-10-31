@@ -56,7 +56,7 @@ class TransactionService(ServiceAbstract):
         transaction = Validator.get_transaction(transaction_id, user_id=user.pk)
         with transaction_db.atomic():
             WalletService.refund(wallet=transaction.wallet, category=transaction.category, amount=transaction.amount)
-            cls.repository.delete(transaction)
+            cls.repository.delete(transaction_id)
         return transaction
 
     @classmethod
@@ -87,12 +87,6 @@ class TransactionService(ServiceAbstract):
     @classmethod
     def search(cls, params: TransactionQueryParams) -> TransactionListOut:
         group_by = None
-        if params.by_budget_id:
-            budget = BudgetRepository().get_by_id(pk=params.by_budget_id)
-            params.wallets = list(budget.wallet.values_list('id', flat=True))
-            params.categories = list(budget.category.values_list('id', flat=True))
-            params.start_date = budget.start_date
-            params.end_date = budget.end_date
 
         qs = cls.repository.get_all_for_user(params=params)
         total = cls.repository.sum_amount(qs)

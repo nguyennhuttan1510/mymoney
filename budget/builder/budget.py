@@ -11,17 +11,18 @@ from transaction.service import TransactionService
 
 T = TypeVar('T')
 
-class BudgetBuilder:
+
+class BudgetBuilder(Generic[T]):
     def __init__(self, budget: Budget):
         self.budget = budget
-        self._result: Union[Type[BudgetOut, BudgetOutCalculate]] = BudgetOut.model_validate(obj=budget)
+        self._result: T = BudgetOut.model_validate(obj=budget)
+
 
 
     def set_calculate(self):
         response = TransactionService.search(params=TransactionQueryParams(budget=self.budget.pk))
-        self._result = BudgetOutCalculate(total_spent=response.total, limit=self.budget.amount, **self._result.dict())
+        self._result = BudgetOutCalculate(total_spent=response.total, limit=self.budget.amount, **self._result.model_dump(by_alias=True))
         return self
 
-
     def build(self) -> T:
-        pass
+        return self._result
