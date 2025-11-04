@@ -17,3 +17,4 @@ class Transaction(Datetime):
     user = models.ForeignKey(User, related_name='transactions', on_delete=models.CASCADE)
     wallet = models.ForeignKey(Wallet, related_name='transactions', on_delete=models.CASCADE)
     budget = models.ForeignKey(Budget, related_name='transactions', on_delete=models.CASCADE, null=True, default=None)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)

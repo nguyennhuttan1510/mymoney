@@ -57,12 +57,12 @@ class BudgetOutCalculate(BudgetOut):
     @computed_field
     @property
     def usage_percent(self) -> float:
-        return float((self.total_spent/self.limit) * 100)
+        return round(float((self.total_spent/self.limit) * 100), 2)
 
     @computed_field
     @property
     def remaining_percent(self) -> float:
-        return float((self.remaining/self.limit) * 100)
+        return round(float((self.remaining/self.limit) * 100), 2)
 
     @computed_field
     @property

@@ -1,8 +1,13 @@
-from typing import Generic, TypeVar, Optional
+from typing import Generic, TypeVar, Optional, List
 from ninja import Schema
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 
 T = TypeVar('T')
+
+class EntityListResponse(Schema, Generic[T]):
+    total: int
+    count: int
+    data: List[T]
 
 
 class ResponseSchema(Schema, Generic[T]):

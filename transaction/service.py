@@ -63,11 +63,11 @@ class TransactionService(ServiceAbstract):
     def _create_transaction(cls, payload: TransactionIn, user):
         wallet = Validator.get_wallet(wallet_id=payload.wallet)
         category = Validator.get_category(category_id=payload.category)
-        cls._ensure_sufficient_balance(amount=payload.amount, wallet=wallet, category=category)
+        # cls._ensure_sufficient_balance(amount=payload.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
+            transaction = cls.repository.create({**payload.dict(by_alias=True), 'user_id': user.pk, 'balance': wallet.balance})
             WalletService.adjust(wallet, category, amount=payload.amount)
-            transaction = cls.repository.create({**payload.dict(by_alias=True), 'user_id': user.pk})
             return transaction
 
     @classmethod
@@ -75,13 +75,13 @@ class TransactionService(ServiceAbstract):
         transaction = Validator.get_transaction(transaction_id)
         wallet = Validator.get_wallet(wallet_id=data.wallet_id)
         category = Validator.get_category(category_id=data.category_id)
-        cls._ensure_sufficient_balance(amount=data.amount, wallet=wallet, category=category)
+        # cls._ensure_sufficient_balance(amount=data.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
+            transaction_updated = cls.repository.update(instance=transaction, data={**data.dict(), 'user_id': user.pk, 'balance': wallet.balance})
             WalletService.refund(category=transaction.category, wallet=transaction.wallet, amount=transaction.amount)
             wallet.refresh_from_db(fields=['balance'])
             WalletService.adjust(category=category, wallet=wallet, amount=data.amount)
-            transaction_updated = cls.repository.update(instance=transaction, data={**data.dict(), 'user_id': user.pk})
             return transaction_updated
 
     @classmethod
@@ -96,7 +96,7 @@ class TransactionService(ServiceAbstract):
 
         return TransactionListOut(transactions=qs, group_by=group_by, total=total)
 
-    @staticmethod
-    def _ensure_sufficient_balance(amount: float, wallet: Wallet, category: Category) -> None:
-        if category.type == TransactionType.EXPENSE and wallet.balance < amount:
-            raise BadRequest("Insufficient wallet balance.")
+    # @staticmethod
+    # def _ensure_sufficient_balance(amount: float, wallet: Wallet, category: Category) -> None:
+    #     if category.type == TransactionType.EXPENSE and wallet.balance < amount:
+    #         raise BadRequest("Insufficient wallet balance.")

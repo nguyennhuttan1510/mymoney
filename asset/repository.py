@@ -19,7 +19,7 @@ class AssetSpecification(Specification[Asset]):
         self.builder = QueryBuilder()
 
     def is_satisfied(self) -> Q:
-        params_dict = self.params.model_dump()
+        params_dict = self.params.model_dump(exclude_none=True)
         self.base_query(params_dict, self.builder)
         return self.builder.build()
 

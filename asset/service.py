@@ -1,7 +1,9 @@
 from typing import Dict
 
+from django.db.models import Sum, Count
+
 from asset.repository import AssetRepository, AssetSpecification
-from asset.schema import AssetIn
+from asset.schema import AssetIn, AssetList
 from core.schema.service_abstract import ServiceAbstract
 
 
@@ -21,3 +23,16 @@ class AssetService(ServiceAbstract):
 
     def delete(self, asset_id:int):
         return self.repository.delete(asset_id)
+
+    def asset_list(self, query) -> AssetList:
+        qs = self.search(query)
+        aggregates = qs.aggregate(
+            total=Sum("buy_price"),
+            count=Count("id"),
+        )
+        return AssetList(
+            total=aggregates['total'] or 0,
+            count=aggregates['count'],
+            data=list(qs)
+        )
+

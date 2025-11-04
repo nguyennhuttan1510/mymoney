@@ -3,7 +3,7 @@ from typing import List
 from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router, Query, PatchDict
 
-from asset.schema import AssetOut, AssetIn, AssetSearchParams
+from asset.schema import AssetOut, AssetIn, AssetSearchParams, AssetList
 from asset.service import AssetService
 from core.schema.response import ResponseSchema, SuccessResponse, NotFoundResponse
 from services.auth_jwt import JWTAuth
@@ -21,11 +21,11 @@ def create(request, payload:AssetIn):
         return Exception(str(e))
 
 
-@router.get('/', response={200: ResponseSchema[List[AssetOut]]})
+@router.get('/', response={200: ResponseSchema[AssetList]})
 def get(request, query: Query[AssetSearchParams]):
     try:
-        assets = service.search(query)
-        return SuccessResponse(data=assets)
+        response = service.asset_list(query)
+        return SuccessResponse(data=response)
     except Exception as e:
         return Exception(str(e))
 
