@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from ninja import Query
+from ninja import Query, PatchDict
 from typing_extensions import Generic, TypeVar
 
 from report.schema import ReportOut, WalletReport

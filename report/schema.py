@@ -30,11 +30,11 @@ class ReportIn(BaseModel):
 
 
 class ReportOut(BaseModel):
-    start_date: datetime | None = None
-    end_date: datetime | None = None
-    categories: list[CategoryReport] | None = None
-    wallets: list[WalletReport] | None = None
-    transactions: list[TransactionReport] | None = None
-    total: float | None = None
-    count_transaction: int | None = None
+    start_date: datetime = Field(default_factory=datetime.now)
+    end_date: datetime = Field(default_factory=datetime.now)
+    categories: list[CategoryReport] = Field(default_factory=list)
+    wallets: list[WalletReport] = Field(default_factory=list)
+    transactions: list[TransactionReport] = Field(default_factory=list)
+    total: float = 0.0
+    count_transaction: int = 0
 

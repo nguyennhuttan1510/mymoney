@@ -66,8 +66,8 @@ class TransactionService(ServiceAbstract):
         # cls._ensure_sufficient_balance(amount=payload.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
-            transaction = cls.repository.create({**payload.dict(by_alias=True), 'user_id': user.pk, 'balance': wallet.balance})
-            WalletService.adjust(wallet, category, amount=payload.amount)
+            transaction = cls.repository.create({**payload.dict(by_alias=True), 'user_id': user.pk})
+            WalletService.adjust(wallet, category, amount=payload.amount, transaction=transaction)
             return transaction
 
     @classmethod
@@ -78,10 +78,10 @@ class TransactionService(ServiceAbstract):
         # cls._ensure_sufficient_balance(amount=data.amount, wallet=wallet, category=category)
 
         with transaction_db.atomic():
-            transaction_updated = cls.repository.update(instance=transaction, data={**data.dict(), 'user_id': user.pk, 'balance': wallet.balance})
+            transaction_updated = cls.repository.update(instance=transaction, data={**data.dict(), 'user_id': user.pk})
             WalletService.refund(category=transaction.category, wallet=transaction.wallet, amount=transaction.amount)
             wallet.refresh_from_db(fields=['balance'])
-            WalletService.adjust(category=category, wallet=wallet, amount=data.amount)
+            WalletService.adjust(category=category, wallet=wallet, amount=data.amount, transaction=transaction_updated)
             return transaction_updated
 
     @classmethod
@@ -94,7 +94,7 @@ class TransactionService(ServiceAbstract):
         if params.group_by:
             group_by = cls.repository.group_by(query=qs, group_by=params.group_by)
 
-        return TransactionListOut(transactions=qs, group_by=group_by, total=total)
+        return TransactionListOut(transactions=list(qs), group_by=group_by, total=total)
 
     # @staticmethod
     # def _ensure_sufficient_balance(amount: float, wallet: Wallet, category: Category) -> None:

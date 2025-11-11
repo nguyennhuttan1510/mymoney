@@ -8,7 +8,6 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from typing_extensions import TypeVar, Generic, List
 
-from report.patterns.builder import ReportBuilder, CategoryReportBuilder
 from report.schema import ReportOut
 
 T = TypeVar('T')

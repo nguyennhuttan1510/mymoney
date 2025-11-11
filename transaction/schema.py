@@ -15,6 +15,7 @@ class TransactionOut(Schema):
     note: str | None = None
     category: int = Field(..., alias='category.id')
     transaction_date: datetime
+    balance: float
 
     # class Config:
     #     from_attributes = True

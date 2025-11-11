@@ -28,7 +28,7 @@ def register(request, payload: RegisterSchema):
         raise BadRequest("User with this username already exists", 'NOT_FOUND')
 
     user = User.objects.create_user(**payload.dict())
-    return BaseResponse(message="User created successfully", success=True, data=user)
+    return SuccessResponse(message="User created successfully", success=True, data=user)
 
 
 @router.post('/logout', response={200: ResponseSchema}, auth=JWTAuth())

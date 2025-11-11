@@ -4,12 +4,9 @@ from django.http import HttpResponse
 
 from report.patterns.builder import ReportBuilder
 from report.patterns.report_strategy import BaseReportStrategy
-from openpyxl import Workbook
 
 from report.patterns.report_template_method import TransactionReportTemplate
 from report.schema import ReportOut
-from transaction.models import Transaction
-from transaction.repository import TransactionRepository
 
 
 class TransactionReportGenerator(BaseReportStrategy):

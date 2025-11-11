@@ -4,6 +4,7 @@ from ninja import PatchDict, Query
 from category.models import Category
 from core.schema.service_abstract import ServiceAbstract
 from enums.transaction import TransactionType
+from transaction.models import Transaction
 from wallet.models import Wallet
 from wallet.repository import WalletRepository
 from wallet.schema import WalletIn, WalletParam
@@ -13,11 +14,13 @@ class WalletService(ServiceAbstract):
     repository = WalletRepository()
 
     @staticmethod
-    def adjust(wallet: Wallet, category: Category or TransactionType, amount: float):
+    def adjust(wallet: Wallet, category: Category or TransactionType, amount: float, transaction: Transaction):
         is_income = (category.type == TransactionType.INCOME.value if hasattr(category,
                                                                               'type') else category == TransactionType.INCOME)
         delta = amount if is_income else -amount
         wallet.balance += delta
+        transaction.balance = wallet.balance
+        transaction.save(update_fields=['balance'])
         wallet.save(update_fields=['balance'])
 
     @classmethod
