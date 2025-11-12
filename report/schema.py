@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from budget.schema import BudgetOut
 from enums.transaction import TransactionType
-from transaction.schema import TransactionReport
+from transaction.schema import TransactionReport, TransactionQuery
 from wallet.models import Wallet
 from wallet.schema import WalletOut
 
@@ -24,9 +24,11 @@ class WalletReport(CategoryReport):
     type: TransactionType | None = Field(exclude=True, default=None)
 
 
-class ReportIn(BaseModel):
+class ReportQuery(BaseModel):
     start_date: datetime
     end_date: datetime
+    wallets: list[int] = None
+    categories: list[int] = None
 
 
 class ReportOut(BaseModel):

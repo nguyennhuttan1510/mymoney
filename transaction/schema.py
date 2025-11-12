@@ -64,7 +64,7 @@ class TransactionUpdateSchema(Schema):
     budget_id: Optional[int] = None
 
 
-class TransactionQueryParams(BaseModel):
+class TransactionQuery(BaseModel):
     categories: list[int] = None
     wallets: list[int] = None
     start_date: datetime = None

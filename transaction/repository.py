@@ -5,12 +5,12 @@ from ninja import Query
 
 from budget.repository import BudgetRepository
 from transaction.models import Transaction
-from transaction.schema import TransactionQueryParams, GroupByTransaction
+from transaction.schema import TransactionQuery, GroupByTransaction
 from utils.query_builder import Specification, QueryBuilder
 from core.dao.repository import Repository
 
 class TransactionSpecification(Specification[Transaction]):
-    def __init__(self, params: Query[TransactionQueryParams]):
+    def __init__(self, params: Query[TransactionQuery]):
         self.params = params
         self.builder = QueryBuilder()
 
@@ -32,7 +32,7 @@ class TransactionRepository(Repository):
     def __init__(self):
         super().__init__(model=Transaction)
 
-    def get_all_for_user(self, params: Query[TransactionQueryParams]):
+    def get_all_for_user(self, params: Query[TransactionQuery]):
         if params.by_budget_id:
             budget = BudgetRepository().get_by_id(pk=params.by_budget_id)
             params.wallets = list(budget.wallet.values_list('id', flat=True))

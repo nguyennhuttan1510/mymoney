@@ -6,7 +6,7 @@ from budget.models import Budget
 from budget.repository import BudgetRepository, BudgetDeleteSpecification
 from budget.schema import BudgetIn, BudgetUpdate, BudgetOut, BudgetOutCalculate, BudgetDeleteIn
 from core.schema.service_abstract import ServiceAbstract
-from transaction.schema import TransactionQueryParams
+from transaction.schema import TransactionQuery
 from transaction.service import TransactionService
 
 
@@ -47,4 +47,4 @@ class BudgetService(ServiceAbstract):
 
     @classmethod
     def get_transactions(cls, budget_id: int):
-        return TransactionService.search(params=TransactionQueryParams(budget=budget_id))
+        return TransactionService.search(params=TransactionQuery(budget=budget_id))

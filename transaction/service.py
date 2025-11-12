@@ -11,7 +11,7 @@ from category.models import Category
 from core.schema.service_abstract import ServiceAbstract
 from transaction.models import Transaction
 from transaction.repository import TransactionRepository
-from transaction.schema import TransactionIn, TransactionUpdateSchema, TransactionQueryParams, TransactionListOut, \
+from transaction.schema import TransactionIn, TransactionUpdateSchema, TransactionQuery, TransactionListOut, \
     TransactionOut
 from enums.transaction import TransactionType
 from wallet.models import Wallet
@@ -85,7 +85,7 @@ class TransactionService(ServiceAbstract):
             return transaction_updated
 
     @classmethod
-    def search(cls, params: TransactionQueryParams) -> TransactionListOut:
+    def search(cls, params: TransactionQuery) -> TransactionListOut:
         group_by = None
 
         qs = cls.repository.get_all_for_user(params=params)

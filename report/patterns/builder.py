@@ -4,7 +4,7 @@ from typing_extensions import Generic, TypeVar
 
 from report.schema import ReportOut, WalletReport
 from transaction.repository import TransactionRepository
-from transaction.schema import TransactionQueryParams
+from transaction.schema import TransactionQuery
 
 T = TypeVar('T')
 
@@ -37,7 +37,7 @@ class ReportBuilder(Generic[T], ABC):
 class CategoryReportBuilder(ReportBuilder[ReportOut]):
     repository = TransactionRepository()
 
-    def __init__(self, params: Query[TransactionQueryParams]):
+    def __init__(self, params: Query[TransactionQuery]):
         self.params = params
         self.qs = self.repository.get_all_for_user(params=params)
         self._result: ReportOut = ReportOut(start_date=params.start_date, end_date=params.end_date)

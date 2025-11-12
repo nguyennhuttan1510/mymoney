@@ -6,7 +6,7 @@ from transaction.service import TransactionService
 from core.schema.response import ResponseSchema, SuccessResponse, CreateSuccessResponse, BadRequestResponse, \
     NotFoundResponse
 from services.auth_jwt import JWTAuth
-from transaction.schema import TransactionOut, TransactionIn, TransactionUpdateSchema, TransactionQueryParams, \
+from transaction.schema import TransactionOut, TransactionIn, TransactionUpdateSchema, TransactionQuery, \
     TransactionListOut
 
 router = Router(tags=['Transaction'], auth=JWTAuth())
@@ -23,7 +23,7 @@ def create_transaction(request, payload: TransactionIn):
 
 
 @router.get("/", response={200: ResponseSchema[TransactionListOut], 404: ResponseSchema})
-def get_all_transaction(request, filters: Query[TransactionQueryParams]):
+def get_all_transaction(request, filters: Query[TransactionQuery]):
     try:
         result = TransactionService.search(params=filters)
         return SuccessResponse(data=result,
