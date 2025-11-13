@@ -1,74 +1,80 @@
-from rest_framework.test import APIClient
+import os
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import connection
-from rest_framework_simplejwt.tokens import RefreshToken
 
+from budget.models import Budget
+from category.models import Category
+from enums.transaction import TransactionType
+from enums.wallet import WalletType
 from tests.helper import create_user, create_wallet, auth_client
-import os
+from wallet.models import Wallet
+from wallet.schema import WalletIn
+
+User = get_user_model()
 
 @pytest.fixture
 def login():
-    def access(client, user):
-        return auth_client(client, user)
-    return access
+    # def access(client, user):
+    #     return auth_client(client, user)
+    return auth_client
 
-@pytest.fixture
-def authentication(user):
-    user = User.objects.get(pk=user.pk)
-    token = str(RefreshToken.for_user(user=user))
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
-    return client
-
-
-@pytest.fixture
-def user_admin():
-    return create_user(is_superuser=True, is_staff=True)
-
-
-@pytest.fixture
-def user():
-    return create_user(username='client', password='o0i9u8y7', is_superuser=False, is_staff=False)
-
-
-@pytest.fixture
-def staff():
-    return create_user(username='staff', password='o0i9u8y7', is_superuser=False, is_staff=True)
-
-
-@pytest.fixture
-def wallet_admin_01(admin_user):
-    return create_wallet(name='wallet_admin_01', balance=5000000, user=admin_user)
-
-
-@pytest.fixture
-def wallet_admin_02(admin_user):
-    return create_wallet(name='wallet_admin_02', balance=6000000, user=admin_user)
-
-
-@pytest.fixture
-def wallet_staff_01(staff):
-    return create_wallet(name='wallet_staff_01', balance=5000000, user=staff)
-
-
-@pytest.fixture
-def wallet_staff_02(staff):
-    return create_wallet(name='wallet_staff_02', balance=6000000, user=staff)
-
-
-@pytest.fixture
-def wallet_user_01(user):
-    return create_wallet(name='wallet_user_01', balance=5000000, user=user)
-
-
-@pytest.fixture
-def wallet_user_02(user):
-    return create_wallet(name='wallet_user_02', balance=6000000, user=user)
-
-# ======================================= INIT DATABASE =======================================
-
+# @pytest.fixture
+# def authentication(user):
+#     user = User.objects.get(pk=user.pk)
+#     token = str(RefreshToken.for_user(user=user))
+#     client = APIClient()
+#     client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+#     return client
+#
+#
+# @pytest.fixture
+# def user_admin():
+#     return create_user(is_superuser=True, is_staff=True)
+#
+#
+# @pytest.fixture
+# def user():
+#     return create_user(username='admin', password='o0i9u8y7', is_superuser=False, is_staff=False)
+#
+#
+# @pytest.fixture
+# def staff():
+#     return create_user(username='staff', password='o0i9u8y7', is_superuser=False, is_staff=True)
+#
+#
+# @pytest.fixture
+# def wallet_admin_01(admin_user):
+#     return create_wallet(name='wallet_admin_01', balance=5000000, user=admin_user)
+#
+#
+# @pytest.fixture
+# def wallet_admin_02(admin_user):
+#     return create_wallet(name='wallet_admin_02', balance=6000000, user=admin_user)
+#
+#
+# @pytest.fixture
+# def wallet_staff_01(staff):
+#     return create_wallet(name='wallet_staff_01', balance=5000000, user=staff)
+#
+#
+# @pytest.fixture
+# def wallet_staff_02(staff):
+#     return create_wallet(name='wallet_staff_02', balance=6000000, user=staff)
+#
+#
+# @pytest.fixture
+# def wallet_user_01(user):
+#     return create_wallet(name='wallet_user_01', balance=5000000, user=user)
+#
+#
+# @pytest.fixture
+# def wallet_user_02(user):
+#     return create_wallet(name='wallet_user_02', balance=6000000, user=user)
+#
+# # ======================================= INIT DATABASE =======================================
+#
 # CATEGORY
 @pytest.fixture(autouse=True, scope='session')
 def load_categories_from_sql(django_db_setup, django_db_blocker):
@@ -91,3 +97,21 @@ def load_categories_from_sql(django_db_setup, django_db_blocker):
 
 
 
+# ====================================================================
+
+
+@pytest.fixture
+def user(db):
+    return User.objects.create_user(username="usertest", password="123456")
+
+@pytest.fixture
+def wallet(db, user):
+    return Wallet.objects.create(user=user, name="Main Wallet", balance=1000000, type=WalletType.CASH.value)
+
+@pytest.fixture
+def category(db):
+    return Category.objects.create(name="Food", type=TransactionType.INCOME.value)
+
+@pytest.fixture
+def budget(db, user, wallet, category):
+    return Budget.objects.create(user=user, name="Food", amount=1000000, wallet=wallet, category=category)

@@ -10,9 +10,6 @@ T = TypeVar('T')
 
 
 class ReportBuilder(Generic[T], ABC):
-    # def __init__(self, data: list[T]):
-    #     self.result: T = None
-    #     self.data = data
 
     @abstractmethod
     def set_transactions(self) -> 'ReportBuilder[T]':

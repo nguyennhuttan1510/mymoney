@@ -17,14 +17,13 @@ class TransactionOut(Schema):
     transaction_date: datetime
     balance: float
 
-    # class Config:
-    #     from_attributes = True
 
 class TransactionReport(Schema):
     amount: float
     wallet: str = Field(..., alias='wallet.name')
     category: CategoryOut
     transaction_date: datetime
+
 
 class GroupByTransaction(BaseModel):
     id: int = None
@@ -35,8 +34,7 @@ class GroupByTransaction(BaseModel):
 
 class TransactionListOut(BaseModel):
     transactions: list[TransactionOut]
-    group_by: list[GroupByTransaction] | None = None
-    total: float | None = None
+    total: float = 0
 
     @computed_field
     @property
@@ -69,15 +67,5 @@ class TransactionQuery(BaseModel):
     wallets: list[int] = None
     start_date: datetime = None
     end_date: datetime = None
-    budget: int | None = Field(default=None, description='Get transaction by budget')
-    by_budget_id: int | None = Field(default=None,
-                                  exclude=True, description='Only get transaction in budget')  # must be set Field(...,exclude=True) with field that is use handle logic ex: budget_id
-    group_by: Literal['category', 'wallet'] | None = Field(default=None, exclude=True)
+    budget_id: int | None = Field(exclude=True, default=None, description='Get transaction by budget')
 
-
-# class TransactionStatistical(BaseModel):
-
-
-class TransactionOutCalculate(BaseModel):
-    transactions: list[TransactionOut]
-    count: int

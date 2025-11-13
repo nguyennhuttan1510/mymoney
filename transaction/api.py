@@ -23,9 +23,9 @@ def create_transaction(request, payload: TransactionIn):
 
 
 @router.get("/", response={200: ResponseSchema[TransactionListOut], 404: ResponseSchema})
-def get_all_transaction(request, filters: Query[TransactionQuery]):
+def get_all_transaction(request, query: Query[TransactionQuery]):
     try:
-        result = TransactionService.search(params=filters)
+        result = TransactionService.search(params=query)
         return SuccessResponse(data=result,
                                message=f"Get all transactions of user {request.auth.pk} successfully")
     except Exception as e:

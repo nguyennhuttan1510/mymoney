@@ -47,4 +47,4 @@ class BudgetService(ServiceAbstract):
 
     @classmethod
     def get_transactions(cls, budget_id: int):
-        return TransactionService.search(params=TransactionQuery(budget=budget_id))
+        return TransactionService.search(params=TransactionQuery(budget_id=budget_id))

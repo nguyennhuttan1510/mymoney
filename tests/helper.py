@@ -31,7 +31,7 @@ def generate_token(user):
 
 
 def auth_client(client, user):
-    token = generate_token(user)
+    access_token = generate_token(user)
 
     def wrapper(method, path, data=None):
         print(f"[DEBUG] HTTP method: {method.upper()} - URL: {path}")
@@ -39,7 +39,7 @@ def auth_client(client, user):
             path,
             data=data,
             content_type="application/json",
-            HTTP_AUTHORIZATION=f"Bearer {token}"
+            HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
 
     return wrapper

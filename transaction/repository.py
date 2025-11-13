@@ -14,7 +14,16 @@ class TransactionSpecification(Specification[Transaction]):
         self.params = params
         self.builder = QueryBuilder()
 
+    def convert_params(self):
+        if self.params.budget_id:
+            budget = BudgetRepository().get_by_id(pk=self.params.budget_id)
+            self.params.wallets = list(budget.wallet.values_list('id', flat=True))
+            self.params.categories = list(budget.category.values_list('id', flat=True))
+            self.params.start_date = budget.start_date
+            self.params.end_date = budget.end_date
+
     def is_satisfied(self) -> Q:
+        self.convert_params()
         params_dict = self.params.model_dump(exclude_unset=True, exclude={'wallets', 'categories', 'start_date', 'end_date'})
         for k, v in params_dict.items():
             if isinstance(v, list): pass
@@ -33,28 +42,18 @@ class TransactionRepository(Repository):
         super().__init__(model=Transaction)
 
     def get_all_for_user(self, params: Query[TransactionQuery]):
-        if params.by_budget_id:
-            budget = BudgetRepository().get_by_id(pk=params.by_budget_id)
-            params.wallets = list(budget.wallet.values_list('id', flat=True))
-            params.categories = list(budget.category.values_list('id', flat=True))
-            params.start_date = budget.start_date
-            params.end_date = budget.end_date
-
         specification = TransactionSpecification(params)
         return self.filter(specification)
 
     @staticmethod
-    def group_by(query:QuerySet[Transaction], group_by: Literal['category', 'wallet'] | None = 'category') -> list[
+    def group_by(qs:QuerySet[Transaction], group_by: Literal['category', 'wallet'] | None = 'category') -> list[
         GroupByTransaction]:
-        calc = query.values(group_by).annotate(
+        return list(qs.values(group_by).annotate(
             id=F(group_by),
             name=F(group_by+'__name'),
             total=Sum('amount'),
             count=Count('id')
-        )
-        return list(calc)
-        # result = [GroupByTransaction(total=obj['total'], count=obj['count'], name=obj['name'], id=obj[group_by]) for obj in list(calc)]
-        # return result
+        ))
 
     @staticmethod
     def sum_amount(query: QuerySet[Transaction]):
