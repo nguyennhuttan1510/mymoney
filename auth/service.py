@@ -4,7 +4,7 @@ from typing import Dict, Type, Any
 from uuid import uuid4
 
 from django.contrib.auth import authenticate, login
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from django.utils import timezone
 
 from django.contrib.auth.models import User
@@ -13,7 +13,8 @@ from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from auth.repository import UserProviderRepository
-from auth.schema import UserProviderIn, Token, PayloadToken
+from auth.schema import UserProviderIn, Token, PayloadToken, UserIn
+from core.exceptions.exceptions import BadRequest
 from session.models import Session
 from user_provider.models import UserProvider
 from services.oauth import oauth, cfg
@@ -102,19 +103,29 @@ class AuthService:
 
     @classmethod
     def _get_or_create_user_internal(cls, email) -> User:
-        uuid = uuid4()
-        if email:
-            try:
-                user = User.objects.get(email__iexact=email)
-            except User.DoesNotExist:
-                user = User.objects.create_user(username=email, email=email)
-        else:
-            user = User.objects.create_user(username=uuid, email=email or "")
-        return user
+        try:
+            return User.objects.get(Q(email__iexact=email) | Q(username=email))
+        except User.DoesNotExist:
+            return cls._create_user(UserIn(username=email or uuid4(), email=email or ""))
+
+    @classmethod
+    def _validate_create_user(cls, payload: UserIn):
+        existed_user = User.objects.filter(Q(username=payload.username) | Q(email=payload.email)).exists()
+        if existed_user:
+            raise BadRequest("username or email already exists", 'NOT_FOUND')
+
+    @classmethod
+    def _create_user(cls, payload: UserIn):
+        return User.objects.create_user(**payload.dict())
 
     @classmethod
     def _create_session(cls, payload) -> Session:
         return Session.objects.create(**payload)
+
+    @classmethod
+    def create_user(cls, payload: UserIn):
+        cls._validate_create_user(payload)
+        return cls._create_user(payload)
 
     @classmethod
     def validate_session(cls, session_id: str) -> Session:

@@ -8,17 +8,33 @@ from budget.models import Budget
 from category.models import Category
 from enums.transaction import TransactionType
 from enums.wallet import WalletType
-from tests.helper import create_user, create_wallet, auth_client
+from tests.helper import generate_token
 from wallet.models import Wallet
 from wallet.schema import WalletIn
 
 User = get_user_model()
 
 @pytest.fixture
-def login():
+def login(request):
     # def access(client, user):
     #     return auth_client(client, user)
-    return auth_client
+    return request
+
+def get_request(client, user=None):
+    def wrapper(method, path, data=None):
+
+        print(f"[DEBUG] HTTP method: {method.upper()} - URL: {path}")
+        config = {
+            "path": path,
+            "data":data,
+            "content_type":"application/json",
+        }
+        if user:
+            access_token = generate_token(user)
+            config.__setitem__("HTTP_AUTHORIZATION", f"Bearer {access_token}")
+
+        return getattr(client, method)(**config)
+    return wrapper
 
 # @pytest.fixture
 # def authentication(user):

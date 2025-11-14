@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.shortcuts import redirect
 from ninja import Router
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
@@ -8,9 +9,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from auth.service import AuthService
 from services.oauth import oauth, cfg
 
-from auth.schema import LoginSchema, RegisterSchema, RegisterResponseSchema, Token
+from auth.schema import LoginSchema, UserIn, RegisterResponseSchema, Token
 from core.exceptions.exceptions import BadRequest
-from core.schema.response import ResponseSchema, BaseResponse, SuccessResponse
+from core.schema.response import ResponseSchema, BaseResponse, SuccessResponse, CreateSuccessResponse
 from services.auth_jwt import JWTAuth
 
 router = Router(tags=['Authentication'])
@@ -21,14 +22,10 @@ def login_user(request, payload: LoginSchema):
     return SuccessResponse(data=res, message="Login success")
 
 
-@router.post("/register", response={200: ResponseSchema[RegisterResponseSchema], 400: ResponseSchema})
-def register(request, payload: RegisterSchema):
-    existed_user = User.objects.filter(username=payload.username).exists()
-    if existed_user:
-        raise BadRequest("User with this username already exists", 'NOT_FOUND')
-
-    user = User.objects.create_user(**payload.dict())
-    return SuccessResponse(message="User created successfully", success=True, data=user)
+@router.post("/register", response={201: ResponseSchema[RegisterResponseSchema], 400: ResponseSchema})
+def register(request, payload: UserIn):
+    AuthService.create_user(payload)
+    return CreateSuccessResponse(message="User created successfully", success=True)
 
 
 @router.post('/logout', response={200: ResponseSchema}, auth=JWTAuth())
