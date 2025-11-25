@@ -34,3 +34,4 @@ class WalletParam(Schema):
     balance: float = None
     type: WalletType = None
     name: str = None
+    user: int = None
