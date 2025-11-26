@@ -15,6 +15,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from auth.repository import UserProviderRepository
 from auth.schema import UserProviderIn, Token, PayloadToken, UserIn
 from core.exceptions.exceptions import BadRequest
+from core.exceptions.session_exception import SessionException, SessionInactive, SessionInvalid, SessionExpired
 from session.models import Session
 from user_provider.models import UserProvider
 from services.oauth import oauth, cfg
@@ -129,35 +130,39 @@ class AuthService:
 
     @classmethod
     def validate_session(cls, session_id: str) -> Session:
-        if not session_id:
-            raise Exception('Session id is required')
-
         session = None
+        if not session_id:
+            raise SessionException('Session id is required')
 
         try:
             session = Session.objects.get(session_id=session_id)
             if not session.is_active:
-                raise Exception('Session inactive')
+                raise SessionInactive()
 
             if not session.expires_at:
-                raise Exception('Session not found expired_at')
+                raise SessionInvalid('Session not found expired_at')
             print('session.expires_at', session.expires_at, timezone.now(), session.expires_at <= timezone.now())
 
             if session.expires_at <= timezone.now():
-                raise Exception('Session expired')
+                raise SessionExpired()
 
         except Session.DoesNotExist:
-            raise Exception('Session not found')
+            raise SessionException('Session not found')
 
-        except Exception as e:
+        except SessionException as e:
             cls._revoke_session(session, note='revoked due to session error')
+            print('e', type(e))
             raise e
+
+        # except TransactionException as e:
+        #     # cls._revoke_session(session, note='revoked due to session error')
+        #     print('TransactionException e', type(e))
+        #     raise e
 
         return session
 
     @classmethod
-    def generate_token(cls, user: User, session: Session = None):
-        session = session or cls._create_session({"user":user})
+    def generate_token(cls, user: User, session: Session):
         payload = PayloadToken(
             session_id=session.session_id,
             email=user.email,
@@ -174,7 +179,7 @@ class AuthService:
     @classmethod
     def _create_user_provider(cls, user_dict) -> UserProvider:
         try:
-            user = cls.repository_provider.create(**user_dict)
+            user = cls.repository_provider.create(user_dict)
             return user
         except Exception as e:
             raise e
@@ -209,8 +214,8 @@ class AuthService:
             raise AuthenticationFailed('Invalid username or password')
         login(request, user)
 
-        other_session = Session.objects.filter(user=user, is_active=True).first()
-        cls._revoke_session(session=other_session, note='revoked due to new login')
+        old_session = Session.objects.filter(user=user, is_active=True).first()
+        cls._revoke_session(session=old_session, note='revoked due to new login')
 
         session = cls._create_session({"user":user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
 
@@ -218,13 +223,13 @@ class AuthService:
 
     @classmethod
     def provider_onboard_process(cls, provider_name, request):
-        Provider = cls.get_provider(provider_name)
-        instance_provider = Provider()
+        provider_class = cls.get_provider(provider_name)
+        provider = provider_class()
 
-        token = instance_provider.get_token(request)
+        token = provider.get_token(request)
         print('token', token)
-        provider_in = instance_provider.get_user_provider(token)
+        provider_in = provider.get_user_provider(token)
 
         user = cls.upsert(provider_in)
-
-        return cls.generate_token(user)
+        session = cls._create_session({"user":user, "user_agent":request.META.get("HTTP_USER_AGENT", "")})
+        return cls.generate_token(user, session=session)

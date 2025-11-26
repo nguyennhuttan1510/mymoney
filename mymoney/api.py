@@ -2,12 +2,16 @@ from ninja import NinjaAPI
 from ninja.errors import ValidationError
 
 import asset.api
-from core.exceptions.exception_handler import exception_handler, validation_exception_handler
+from core.exceptions.base import BusinessException
+from core.exceptions.exception_handler import exception_handler, validation_exception_handler, \
+    business_exception_handler
+from core.exceptions.session_exception import SessionException
 
 api = NinjaAPI()
 
-api.add_exception_handler(Exception, exception_handler)
+api.add_exception_handler(BusinessException, business_exception_handler)
 api.add_exception_handler(ValidationError, validation_exception_handler)
+api.add_exception_handler(Exception, exception_handler)
 
 
 api.add_router('/auth', 'auth.api.router')

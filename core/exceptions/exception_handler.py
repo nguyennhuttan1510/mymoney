@@ -3,12 +3,14 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.exceptions import APIException
 
+from core.exceptions.base import BusinessException
+
 
 def exception_handler(request, exc):
     if isinstance(exc, APIException):
         return api_exception_handler(request, exc)
 
-    return JsonResponse( {"message": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return JsonResponse({"message": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def api_exception_handler(request, exc: APIException):
@@ -16,7 +18,7 @@ def api_exception_handler(request, exc: APIException):
         "success": False,
         "message": str(exc),
         "code": str(exc.default_code)
-    }, status= exc.status_code)
+    }, status=exc.status_code)
 
 
 def validation_exception_handler(request, exc: ValidationError):
@@ -29,3 +31,24 @@ def validation_exception_handler(request, exc: ValidationError):
         "message": 'validation failed',
         "errors": field_error,
     }, status=422)
+
+
+def business_exception_handler(request, exc: BusinessException):
+    """
+    Convert BusinessException -> Ninja Response
+    """
+    # Log error theo chuẩn
+    print('exc', exc)
+    print('exc', type(exc))
+    print(f"[ERROR] {exc.error_code}: {exc.message} - payload: {exc.payload}")
+
+    return JsonResponse(
+        {
+            "error": {
+                "code": exc.error_code,
+                "message": exc.message,
+                "details": exc.payload,
+            }
+        },
+        status=exc.status_code,
+    )
