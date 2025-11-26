@@ -1,6 +1,7 @@
 from ninja import ModelSchema, Field, Schema
 from pydantic import BaseModel, field_validator
 
+from core.schema.response import EntityListResponse
 from enums.transaction import TransactionType
 from enums.wallet import WalletType
 from wallet.models import Wallet
@@ -12,6 +13,14 @@ class WalletOut(Schema):
     balance: float
     type: WalletType
 
+class WalletLiteOut(Schema):
+    id: int
+    name: str
+    type: WalletType
+
+
+class WalletListOut(EntityListResponse[WalletOut]):
+    pass
 
 class WalletIn(ModelSchema):
     name: str

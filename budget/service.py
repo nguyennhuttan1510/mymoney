@@ -24,7 +24,7 @@ class BudgetService(ServiceAbstract):
 
     @classmethod
     def get_all_budget_for_user(cls, user_id: int, params):
-        return cls.repository.get_all_for_user(user_id=user_id, params=params)
+        return cls.repository.search(params=params)
 
     @classmethod
     def get_budget(cls, budget_id: int):

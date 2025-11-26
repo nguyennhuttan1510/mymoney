@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'user_provider',
     'session',
     'asset',
-    'user'
 ]
 
 

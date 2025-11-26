@@ -1,5 +1,6 @@
 from enum import Enum
 
+from django.contrib.auth.models import User
 from django.db import models
 
 from core.models.datetime import Datetime
@@ -22,5 +23,6 @@ class Asset(Datetime):
     buy_date = models.DateTimeField()
     sell_date = models.DateTimeField(null=True, blank=True)
     note = models.CharField(null=True, max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
 

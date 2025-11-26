@@ -6,25 +6,30 @@ from pydantic import Field, BaseModel, computed_field
 
 from budget.models import Budget
 from category.schema import CategoryOut
+from core.schema.response import EntityListResponse
 from enums.budget import BudgetStatus
-from wallet.schema import WalletOut, WalletIn
+from wallet.schema import WalletOut, WalletIn, WalletLiteOut
 
 
 class BudgetOut(Schema):
     id: int
     categories: list[CategoryOut] = Field(..., alias='category')
-    wallets: list[WalletOut] = Field(..., alias='wallet')
+    wallets: list[WalletLiteOut] = Field(..., alias='wallet')
     amount: float
     description: str | None = None
     start_date: datetime
     end_date: datetime
 
 
+class BudgetListOut(EntityListResponse[BudgetOut]):
+    pass
+
+
 class BudgetIn(BaseModel):
     name: str
     amount: float
-    wallet: list[int] | None = Field(default=None, alias='wallets')
-    category: list[int] | None = Field(default=None, alias='categories')
+    wallets: list[int] = []
+    categories: list[int] = []
     start_date: datetime = Field(default=datetime.now())
     end_date: datetime = Field(default=datetime.now())
 
