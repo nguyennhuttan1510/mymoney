@@ -41,8 +41,8 @@ class BudgetRepository(Repository[Budget]):
         super().__init__(model=Budget)
 
     def create(self, data: dict):
-        categories = data.pop('category', None)
-        wallets = data.pop('wallet', None)
+        categories = data.pop('categories', None)
+        wallets = data.pop('wallets', None)
         instance = super().create(data)
         if categories:
             instance.category.set(categories)
@@ -50,7 +50,7 @@ class BudgetRepository(Repository[Budget]):
             instance.wallet.set(wallets)
         return instance
 
-    def get_all_for_user(self, user_id, params: Query[BudgetQueryParam]):
+    def search(self, params: Query[BudgetQueryParam]):
         specification = BudgetSpecification(params)
         return self.filter(specification)
 

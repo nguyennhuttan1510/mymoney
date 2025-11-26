@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 from category.models import Category
@@ -15,4 +16,5 @@ class Budget(Datetime):
     wallet = models.ManyToManyField(Wallet)
     category = models.ManyToManyField(Category)
     # is_event = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 

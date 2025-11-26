@@ -10,7 +10,7 @@ from wallet.repository import WalletRepository
 from wallet.schema import WalletIn, WalletParam
 
 
-class WalletService(ServiceAbstract):
+class WalletService:
     repository = WalletRepository()
 
     @staticmethod

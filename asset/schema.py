@@ -42,6 +42,7 @@ class AssetOut(AssetIn):
 
 class AssetSearchParams(Schema):
     status: StatusAsset | None = None
+    user_id: int | None = None
 
 
 class AssetList(EntityListResponse[AssetOut]):
