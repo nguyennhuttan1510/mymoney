@@ -18,7 +18,7 @@ from core.exceptions.exceptions import BadRequest
 from session.models import Session
 from user_provider.models import UserProvider
 from services.oauth import oauth, cfg
-
+from utils.query_builder import QueryBuilder
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -150,6 +150,8 @@ class AuthService:
             raise Exception('Session not found')
 
         except Exception as e:
+            # query_builder = QueryBuilder().add_condition("session_id", session_id)
+            # cls._revoke_session(query_builder, str(e))
             cls._revoke_session(session, note='revoked due to session error')
             raise e
 
@@ -192,6 +194,11 @@ class AuthService:
             print('Update user provider error', e)
             raise e
 
+
+    # @classmethod
+    # def _revoke_session(cls, query_builder: QueryBuilder, note="revoked due to new login"):
+    #     Session.objects.filter(query_builder.build()).update(is_active=False, note=note, revoked_at=datetime.now())
+
     @classmethod
     def _revoke_session(cls, session: Session, note=None):
         if not session:
@@ -208,6 +215,9 @@ class AuthService:
         if not user:
             raise AuthenticationFailed('Invalid username or password')
         login(request, user)
+
+        # query_builder = QueryBuilder().add_condition("user", user).add_condition("is_active", True)
+        # cls._revoke_session(query_builder)
 
         other_session = Session.objects.filter(user=user, is_active=True).first()
         cls._revoke_session(session=other_session, note='revoked due to new login')

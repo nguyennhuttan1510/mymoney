@@ -43,5 +43,12 @@
         </library>
       </libraries>
     </data-source>
+    <data-source source="LOCAL" name="db_dev" uuid="2d7ea8f4-fe55-403c-91bb-f7357f1eeaa3">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://172.22.160.1:5432/mydb</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

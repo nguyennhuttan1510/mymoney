@@ -114,9 +114,17 @@ WSGI_APPLICATION = 'mymoney.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # }
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "mydb",
+        "USER": "dev",
+        "PASSWORD": "dev",
+        "HOST": "172.22.160.1",
+        "PORT": "5432",
     }
 }
 
