@@ -115,8 +115,19 @@ WSGI_APPLICATION = 'mymoney.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': '192.168.1.4',
+        'PORT': '6432',
+        'CONN_MAX_AGE': 0
+        # 'OPTIONS': {
+        #     # Optional: enable connection pooling in Django 5.1+
+        #     "pool": True
+        # }
     }
 }
 
