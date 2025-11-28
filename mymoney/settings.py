@@ -123,8 +123,9 @@ DATABASES = {
         "NAME": "mydb",
         "USER": "dev",
         "PASSWORD": "dev",
-        "HOST": "172.22.160.1",
-        "PORT": "5432",
+        "HOST": "10.91.10.19",
+        "PORT": "6432",
+        "CONN_MAX_AGE": 0,
     }
 }
 
