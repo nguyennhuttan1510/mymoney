@@ -14,8 +14,10 @@ from transaction.repository import TransactionRepository
 from transaction.schema import TransactionIn, TransactionUpdateSchema, TransactionQuery, TransactionListOut, \
     TransactionOut
 from enums.transaction import TransactionType
+from utils.cache import make_cache_key
 from wallet.models import Wallet
 from wallet.service import WalletService
+from django.core.cache import cache
 
 
 class Validator:
@@ -84,6 +86,15 @@ class TransactionService(ServiceAbstract):
 
     @classmethod
     def search(cls, params: TransactionQuery) -> TransactionListOut:
+
+        key = make_cache_key("transactions_search", params.model_dump(exclude_none=True))
+        data = cache.get(key)
+        if data:
+            return {"cached": True, "data": data}
+
         qs = cls.repository.get_all_for_user(params=params)
         total = cls.repository.sum_amount(qs)
+
+        cache.set(key, list(qs), timeout=60)
+
         return TransactionListOut(transactions=list(qs), total=total)

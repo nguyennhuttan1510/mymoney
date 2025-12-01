@@ -8,6 +8,7 @@ from transaction.models import Transaction
 from transaction.schema import TransactionQuery, GroupByTransaction
 from utils.query_builder import Specification, QueryBuilder
 from core.dao.repository import Repository
+import redis
 
 class TransactionSpecification(Specification[Transaction]):
     def __init__(self, params: Query[TransactionQuery]):
