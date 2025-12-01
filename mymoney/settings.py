@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'user_provider',
     'session',
     'asset',
+    'debug_toolbar',
 ]
 
 
@@ -67,6 +68,7 @@ SIMPLE_JWT = {
 SESSION_EXPIRE_MINUTES=3600
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,6 +76,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+    # Add other development IPs if needed, e.g., "192.168.1.10"
 ]
 
 ROOT_URLCONF = 'mymoney.urls'
@@ -120,15 +127,21 @@ DATABASES = {
     # }
     'default': {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mydb",
-        "USER": "dev",
-        "PASSWORD": "dev",
+        "NAME": "postgres",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
         "HOST": "10.91.10.19",
         "PORT": "6432",
         "CONN_MAX_AGE": 0,
     }
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

@@ -43,7 +43,8 @@ class TransactionRepository(Repository):
 
     def get_all_for_user(self, params: Query[TransactionQuery]):
         specification = TransactionSpecification(params)
-        return self.filter(specification)
+        return self.model.objects.filter(specification.is_satisfied()).select_related('category', 'wallet', 'user')
+        # return self.filter(specification)
 
     @staticmethod
     def group_by(qs:QuerySet[Transaction], group_by: Literal['category', 'wallet'] | None = 'category') -> list[

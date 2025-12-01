@@ -36,4 +36,4 @@ class ApiUser(HttpUser):
             return
 
         headers = {"Authorization": f"Bearer {self.token}"}
-        self.client.get("/api/asset/", headers=headers)
+        self.client.get("/api/transaction/", headers=headers)
