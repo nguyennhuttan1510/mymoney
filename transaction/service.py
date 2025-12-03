@@ -90,11 +90,12 @@ class TransactionService(ServiceAbstract):
         key = make_cache_key("transactions_search", params.model_dump(exclude_none=True))
         data = cache.get(key)
         if data:
-            return {"cached": True, "data": data}
+            # return {"cached": True, "data": data}
+            return TransactionListOut(transactions=list(data), total=0)
 
         qs = cls.repository.get_all_for_user(params=params)
         total = cls.repository.sum_amount(qs)
 
-        cache.set(key, list(qs), timeout=60)
+        cache.set(key, list(qs), timeout=360)
 
         return TransactionListOut(transactions=list(qs), total=total)
