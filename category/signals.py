@@ -6,7 +6,7 @@ from django.dispatch import receiver
 
 @receiver(post_migrate)
 def run_sql_after_migrate(sender, **kwargs):
-    if sender.name != 'category':  # Chỉ chạy cho ứng dụng 'my_app'
+    if sender.name != 'category':
         return
 
     # Đường dẫn đến file SQL

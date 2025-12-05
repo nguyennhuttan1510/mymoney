@@ -26,9 +26,7 @@ class TransactionSpecification(Specification[Transaction]):
     def is_satisfied(self) -> Q:
         self.convert_params()
         params_dict = self.params.model_dump(exclude_unset=True, exclude={'wallets', 'categories', 'start_date', 'end_date'})
-        for k, v in params_dict.items():
-            if isinstance(v, list): pass
-            self.builder.add_condition(k, v)
+        self.base_query(params_dict, self.builder)
 
         if self.params.wallets:
             self.builder.add_relation_condition('wallet', self.params.wallets)

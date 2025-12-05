@@ -2,7 +2,7 @@
 <module type="WEB_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python facet">
-      <configuration sdkName="Python 3.13 (mymoney-api)" />
+      <configuration sdkName="Python 3.13 virtualenv at C:\Users\GROOO0025\Desktop\projects\mymoney-project\mymoney-api\.venv" />
     </facet>
   </component>
   <component name="NewModuleRootManager">
@@ -11,9 +11,10 @@
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv1" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Python 3.13 (mymoney-api) interpreter library" level="application" />
+    <orderEntry type="library" name="Python 3.13 virtualenv at C:\Users\GROOO0025\Desktop\projects\mymoney-project\mymoney-api\.venv interpreter library" level="application" />
   </component>
 </module>

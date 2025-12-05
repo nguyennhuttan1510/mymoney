@@ -1,0 +1,60 @@
+#version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mymoney
+      CONN_MAX_AGE: 0
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+#    networks:
+#      - backend
+
+
+  pgbouncer:
+    container_name: pgbouncer
+    ### build from source
+    image: edoburu/pgbouncer
+      # args:
+      #   VERSION: 1.24.1
+    ### download from dockerhub
+    # image: edoburu/pgbouncer:latest
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: postgres
+      DB_NAME: postgres
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      AUTH_TYPE: scram-sha-256
+#      - DB_USER=postgres
+#      - DB_PASSWORD=postgres
+#      - DB_HOST=postgres
+#      # - DB_NAME=test
+#      - AUTH_TYPE=scram-sha-256 # remove/comment this line if using postgres:13 and lower
+#      - POOL_MODE=transaction
+#      - ADMIN_USERS=postgres,dbuser
+#      - LOGFILE=/var/log/pgbouncer/pgbouncer.log
+#      - VERBOSE=0
+    volumes:
+      - ./logs:/var/log/pgbouncer
+    ports:
+      - "6432:6432"
+    depends_on:
+      - postgres
+#    networks:
+#      - backend
+
+volumes:
+  pg_data:
+#
+#networks:
+#  backend:
+#    driver: bridge

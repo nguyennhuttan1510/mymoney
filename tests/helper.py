@@ -1,3 +1,4 @@
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from budget.models import Budget
@@ -12,14 +13,15 @@ from wallet.models import Wallet
 def create_wallet(name="Default Wallet", balance=0, user=None, type: WalletType = WalletType.CASH.value) -> Wallet:
     return Wallet.objects.create(user=user, name=name, balance=balance, type=type)
 
-
-def create_user(username="admin", password="o0i9u8y7", **extra_field):
-    return User.objects.create_user(username=username, password=password, **extra_field)
+@pytest.fixture
+def create_user(db):
+    def _create_user(username, password, **extra_field):
+        return User.objects.create_user(username=username, password=password, **extra_field)
+    return _create_user
 
 
 def create_category(name='Category_1', category_type="INCOME") -> Category:
     return Category.objects.create(name=name, type=category_type)
-
 
 def create_budget(*args, **kwargs) -> Budget:
     return Budget.objects.create(*args, **kwargs)
