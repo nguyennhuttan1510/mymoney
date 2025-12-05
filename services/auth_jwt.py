@@ -20,9 +20,8 @@ class JWTAuth(HttpBearer):
         jwt_auth = JWTAuthentication()
         try:
             user, validated_token = jwt_auth.authenticate(request)
-            print('user', user)
-            print('validated_token', validated_token['session_id'])
-            session = AuthService.validate_session(validated_token['session_id'])
+            print('session_id', validated_token['session_id'])
+            AuthService.validate_session(validated_token['session_id'], user)
             return user
 
         except SessionException as e:

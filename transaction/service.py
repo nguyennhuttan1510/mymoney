@@ -1,6 +1,8 @@
+import json
 from typing import Literal, List
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction as transaction_db
 from django.db.models import Sum, QuerySet
 
@@ -14,8 +16,10 @@ from transaction.repository import TransactionRepository
 from transaction.schema import TransactionIn, TransactionUpdateSchema, TransactionQuery, TransactionListOut, \
     TransactionOut
 from enums.transaction import TransactionType
+from utils.cache import make_cache_key
 from wallet.models import Wallet
 from wallet.service import WalletService
+from django.core.cache import cache
 
 
 class Validator:
@@ -84,6 +88,18 @@ class TransactionService(ServiceAbstract):
 
     @classmethod
     def search(cls, params: TransactionQuery) -> TransactionListOut:
+
+        key = make_cache_key("transactions_search", params.model_dump(exclude_none=True))
+        cached = cache.get(key)
+        if cached:
+            print('deserialize', json.loads(cached))
+            return TransactionListOut(transactions=list(json.loads(cached)), total=0)
+
         qs = cls.repository.get_all_for_user(params=params)
-        total = cls.repository.sum_amount(qs)
-        return TransactionListOut(transactions=list(qs), total=total)
+        # total = cls.repository.sum_amount(qs)
+
+        print('serialize', json.dumps(list(qs.values()), cls=DjangoJSONEncoder))
+
+        cache.set(key, json.dumps(list(qs.values()), cls=DjangoJSONEncoder), timeout=360)
+
+        return TransactionListOut(transactions=list(qs), total=0)

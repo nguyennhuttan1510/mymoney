@@ -55,8 +55,8 @@ INSTALLED_APPS = [
     'user_provider',
     'session',
     'asset',
+    'debug_toolbar',
 ]
-INSTALLED_APPS += ['debug_toolbar']
 
 
 SIMPLE_JWT = {
@@ -74,8 +74,7 @@ INTERNAL_IPS = [
 ]
 
 MIDDLEWARE = [
-    # 'silk.middleware.SilkyMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware', # debug_toolbar
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -83,39 +82,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'middlewares.query_debug.SimpleDebugMiddleware'
-]
-
-# Silk settings
-# SILKY_PYTHON_PROFILER = True
-# SILKY_PYTHON_PROFILER_BINARY = True
-# # SILKY_PYTHON_PROFILER_RESULT_PATH = BASE_DIR / 'tmp/silk/'
-#
-# # Chỉ enable cho superuser
-# SILKY_AUTHENTICATION = True
-# SILKY_AUTHORISATION = True
-#
-# # Maximum requests to store
-# SILKY_MAX_REQUEST_BODY_SIZE = 1024 * 1024  # 1MB
-# SILKY_MAX_RESPONSE_BODY_SIZE = 1024 * 1024  # 1MB
-# SILKY_MAX_RECORDED_REQUESTS = 10000
-
-# Debug toolbar panels
-DEBUG_TOOLBAR_PANELS = [
-    'debug_toolbar.panels.history.HistoryPanel',
-    'debug_toolbar.panels.versions.VersionsPanel',
-    'debug_toolbar.panels.timer.TimerPanel',
-    'debug_toolbar.panels.settings.SettingsPanel',
-    'debug_toolbar.panels.headers.HeadersPanel',
-    'debug_toolbar.panels.request.RequestPanel',
-    'debug_toolbar.panels.sql.SQLPanel',  # QUAN TRỌNG - xem SQL queries
-    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-    'debug_toolbar.panels.templates.TemplatesPanel',
-    'debug_toolbar.panels.cache.CachePanel',
-    'debug_toolbar.panels.signals.SignalsPanel',
-    'debug_toolbar.panels.logging.LoggingPanel',
-    'debug_toolbar.panels.redirects.RedirectsPanel',
-    'debug_toolbar.panels.profiling.ProfilingPanel',
 ]
 
 ROOT_URLCONF = 'mymoney.urls'
@@ -157,22 +123,26 @@ WSGI_APPLICATION = 'mymoney.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': '192.168.1.3',
-        'PORT': '6432',
-        'CONN_MAX_AGE': 0
-        # 'OPTIONS': {
-        #     # Optional: enable connection pooling in Django 5.1+
-        #     "pool": True
-        # }
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "192.168.1.3",
+        "PORT": "6432",
+        "CONN_MAX_AGE": 0,
     }
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        # "OPTIONS": {
+        #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        # },
+        "KEY_PREFIX": "myapp"
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

@@ -42,4 +42,6 @@ class ApiUser(HttpUser):
             return
 
         headers = {"Authorization": f"Bearer {self.token}"}
-        self.client.get("/api/transaction/", headers=headers)
+        response = self.client.get("/api/transaction/", headers=headers)
+        if response.status_code == 401:
+            print("❌ Unauthorized:", response.text)

@@ -3,17 +3,21 @@ from datetime import datetime
 from typing import Dict, Type, Any
 from uuid import uuid4
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login
+from django.core.cache import cache
 from django.db.models import QuerySet, Q
 from django.utils import timezone
 
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.utils.dateparse import parse_datetime
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from auth.repository import UserProviderRepository
 from auth.schema import UserProviderIn, Token, PayloadToken, UserIn
+from core.cache.redis import redis_client as r
 from core.exceptions.exceptions import BadRequest
 from core.exceptions.session_exception import SessionException, SessionInactive, SessionInvalid, SessionExpired
 from session.models import Session
@@ -24,7 +28,7 @@ from utils.query_builder import QueryBuilder
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
-    def get_token(cls, user: User, payload: PayloadToken|None = None) -> Token:
+    def get_token(cls, user: User, payload: PayloadToken | None = None) -> Token:
         token = super().get_token(user)
 
         # Add custom claims from payload if provided
@@ -36,7 +40,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class ProviderAccountAbstract(ABC):
-    provider_name=None
+    provider_name = None
 
     @abstractmethod
     def login(self, request):
@@ -129,41 +133,34 @@ class AuthService:
         return cls._create_user(payload)
 
     @classmethod
-    def validate_session(cls, session_id: str) -> Session:
-        session = None
+    def validate_session(cls, session_id: str, user) -> Session:
         if not session_id:
             raise SessionException('Session id is required')
 
         try:
-            session = Session.objects.get(session_id=session_id)
-            if not session.is_active:
+            session_cached = cache.get(cls._create_session_key(user, session_id))
+            if not session_cached:
+                raise SessionException('Not found in cache')
+
+            if not session_cached["is_active"]:
                 raise SessionInactive()
 
-            if not session.expires_at:
+            if not session_cached['expires_at']:
                 raise SessionInvalid('Session not found expired_at')
-            print('session.expires_at', session.expires_at, timezone.now(), session.expires_at <= timezone.now())
 
-            if session.expires_at <= timezone.now():
+            if parse_datetime(session_cached['expires_at']) <= timezone.now():
                 raise SessionExpired()
 
-        except Session.DoesNotExist:
-            raise SessionException('Session not found')
 
         except SessionException as e:
             query_builder = QueryBuilder().add_condition("session_id", session_id)
             cls._revoke_session(query_builder, str(e))
             raise e
 
-        # except TransactionException as e:
-        #     # cls._revoke_session(session, note='revoked due to session error')
-        #     print('TransactionException e', type(e))
-        #     raise e
-
-        return session
+        return session_cached
 
     @classmethod
-    def generate_token(cls, user: User, session: Session = None):
-        session = session or cls._create_session({"user":user})
+    def generate_token(cls, user: User, session: Session):
         payload = PayloadToken(
             session_id=session.session_id,
             email=user.email,
@@ -172,7 +169,7 @@ class AuthService:
         serialized = CustomTokenObtainPairSerializer()
         refresh_token = serialized.get_token(user, payload)
 
-        return  {
+        return {
             "refresh_token": str(refresh_token),
             "access_token": str(refresh_token.access_token)
         }
@@ -187,7 +184,8 @@ class AuthService:
 
     @classmethod
     def _get_user_provider(cls, user_provider: UserProviderIn):
-        return cls.repository_provider.model.objects.select_for_update().get(provider=user_provider.provider, provider_account_id=user_provider.provider_account_id)
+        return cls.repository_provider.model.objects.select_for_update().get(provider=user_provider.provider,
+                                                                             provider_account_id=user_provider.provider_account_id)
 
     @classmethod
     def _update_user_provider(cls, instance, user_dict) -> UserProvider:
@@ -198,47 +196,68 @@ class AuthService:
             print('Update user provider error', e)
             raise e
 
-
     @classmethod
     def _revoke_session(cls, query_builder: QueryBuilder, note="revoked due to new login"):
         Session.objects.filter(query_builder.build()).update(is_active=False, note=note, revoked_at=datetime.now())
 
-    # @classmethod
-    # def _revoke_session(cls, session: Session, note=None):
-    #     if not session:
-    #         return
-    #     session.is_active = False
-    #     session.revoked_at = datetime.now()
-    #     session.note = note
-    #     session.save()
+    @classmethod
+    def _create_session_key(cls, user, session_id):
+        return f"session:{user.id}:{session_id}"
 
+    @classmethod
+    def _cache_session(cls, key, session: Session):
+        payload = {
+            "session_id": str(session.session_id),
+            "is_active": session.is_active,
+            "expires_at": session.expires_at.isoformat()
+        }
+        cache.set(key, payload, timeout=settings.SESSION_EXPIRE_MINUTES)
+
+    @classmethod
+    def _revoke_cache_session(cls, keys):
+        cache.delete_many(keys)
+
+    @classmethod
+    def _delete_pattern(cls, pattern):
+        cursor = 0
+        while True:
+            cursor, keys = r.scan(cursor=cursor, match=f"myapp:1:{pattern}", count=2000)
+            if keys:
+                r.unlink(*keys)  # non-blocking delete
+            if cursor == 0:
+                break
 
     @classmethod
     def login_process(cls, payload, request):
+        #Step 1: validate user
         user = authenticate(username=payload.username, password=payload.password)
         if not user:
             raise AuthenticationFailed('Invalid username or password')
         login(request, user)
 
+        #Step 2: Check session existing and disabled
         query_builder = QueryBuilder().add_condition("user", user).add_condition("is_active", True)
         cls._revoke_session(query_builder)
+        cls._delete_pattern(f"session:{user.id}:*")
 
-        # other_session = Session.objects.filter(user=user, is_active=True).first()
-        # cls._revoke_session(session=other_session, note='revoked due to new login')
+        #Step 3: Create new session
+        session = cls._create_session({"user": user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
 
-        session = cls._create_session({"user":user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
+        #Step 4: Cache
+        session_key = cls._create_session_key(user, str(session.session_id))
+        cls._cache_session(session_key, session)
 
         return cls.generate_token(user, session=session)
 
     @classmethod
     def provider_onboard_process(cls, provider_name, request):
-        Provider = cls.get_provider(provider_name)
-        instance_provider = Provider()
+        provider_class = cls.get_provider(provider_name)
+        provider = provider_class()
 
-        token = instance_provider.get_token(request)
+        token = provider.get_token(request)
         print('token', token)
-        provider_in = instance_provider.get_user_provider(token)
+        provider_in = provider.get_user_provider(token)
 
         user = cls.upsert(provider_in)
-
-        return cls.generate_token(user)
+        session = cls._create_session({"user": user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
+        return cls.generate_token(user, session=session)

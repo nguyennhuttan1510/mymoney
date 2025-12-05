@@ -22,9 +22,7 @@ import debug_toolbar
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", api.urls),
-    path("__debug__/", include(debug_toolbar.urls)),
+    path('__debug__/', include(debug_toolbar.urls)),
     # path('api/', api.urls),
     # path('transaction/', api.api.urls),
 ]
-
-# urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]
