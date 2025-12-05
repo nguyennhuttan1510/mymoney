@@ -25,7 +25,7 @@ def get_global_token(client):
 
 
 class ApiUser(HttpUser):
-    wait_time = between(0.01, 0.05)  # thời gian chờ giữa các request
+    wait_time = between(1, 3)  # thời gian chờ giữa các request
 
     def on_start(self):
         """
@@ -42,4 +42,6 @@ class ApiUser(HttpUser):
             return
 
         headers = {"Authorization": f"Bearer {self.token}"}
-        self.client.get("/api/transaction/", headers=headers)
+        response = self.client.get("/api/transaction/", headers=headers)
+        if response.status_code == 401:
+            print("❌ Unauthorized:", response.text)

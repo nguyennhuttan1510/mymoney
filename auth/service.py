@@ -133,13 +133,15 @@ class AuthService:
         return cls._create_user(payload)
 
     @classmethod
-    def validate_session(cls, session_id: str) -> Session:
-        session = None
+    def validate_session(cls, session_id: str, user) -> Session:
         if not session_id:
             raise SessionException('Session id is required')
 
         try:
             session_cached = cache.get(cls._create_session_key(user, session_id))
+            if not session_cached:
+                raise SessionException('Not found in cache')
+
             if not session_cached["is_active"]:
                 raise SessionInactive()
 
@@ -167,7 +169,7 @@ class AuthService:
         serialized = CustomTokenObtainPairSerializer()
         refresh_token = serialized.get_token(user, payload)
 
-        return  {
+        return {
             "refresh_token": str(refresh_token),
             "access_token": str(refresh_token.access_token)
         }
@@ -197,7 +199,6 @@ class AuthService:
     @classmethod
     def _revoke_session(cls, query_builder: QueryBuilder, note="revoked due to new login"):
         Session.objects.filter(query_builder.build()).update(is_active=False, note=note, revoked_at=datetime.now())
-
 
     @classmethod
     def _create_session_key(cls, user, session_id):
@@ -258,5 +259,5 @@ class AuthService:
         provider_in = provider.get_user_provider(token)
 
         user = cls.upsert(provider_in)
-        session = cls._create_session({"user":user, "user_agent":request.META.get("HTTP_USER_AGENT", "")})
+        session = cls._create_session({"user": user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
         return cls.generate_token(user, session=session)
