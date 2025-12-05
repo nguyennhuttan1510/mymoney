@@ -11,9 +11,9 @@ from wallet.schema import WalletOut
 class TransactionOut(Schema):
     id: int
     amount: float
-    wallet_id: int
+    wallet: int = Field(..., alias='wallet.id')
     note: str | None = None
-    category_id: int
+    category: int = Field(..., alias='category.id')
     transaction_date: datetime
     balance: float
 

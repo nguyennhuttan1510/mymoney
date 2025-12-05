@@ -1,8 +1,6 @@
-import json
 from typing import Literal, List
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction as transaction_db
 from django.db.models import Sum, QuerySet
 
@@ -90,16 +88,13 @@ class TransactionService(ServiceAbstract):
     def search(cls, params: TransactionQuery) -> TransactionListOut:
 
         key = make_cache_key("transactions_search", params.model_dump(exclude_none=True))
-        cached = cache.get(key)
-        if cached:
-            print('deserialize', json.loads(cached))
-            return TransactionListOut(transactions=list(json.loads(cached)), total=0)
+        data = cache.get(key)
+        if data:
+            return TransactionListOut(transactions=list(data), total=0)
 
         qs = cls.repository.get_all_for_user(params=params)
-        # total = cls.repository.sum_amount(qs)
+        total = cls.repository.sum_amount(qs)
 
-        print('serialize', json.dumps(list(qs.values()), cls=DjangoJSONEncoder))
+        cache.set(key, list(qs), timeout=360)
 
-        cache.set(key, json.dumps(list(qs.values()), cls=DjangoJSONEncoder), timeout=360)
-
-        return TransactionListOut(transactions=list(qs), total=0)
+        return TransactionListOut(transactions=list(qs), total=total)
