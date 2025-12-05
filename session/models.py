@@ -27,5 +27,6 @@ class Session(models.Model):
         return self.session_id
 
     def save(self, **kwargs):
-        self.expires_at = timezone.now() + timedelta(minutes=settings.SESSION_EXPIRE_MINUTES)
+        self.expires_at = timezone.now() + timedelta(seconds=settings.SESSION_EXPIRE_MINUTES)
+        print('expires_at', self.expires_at)
         super().save(**kwargs)
