@@ -5,25 +5,6 @@ import json
 USERNAME = "admin"
 PASSWORD = "o0i9u8y7"
 
-
-import threading
-
-token_lock = threading.Lock()
-cached_token = None
-
-def get_global_token(client):
-    global cached_token
-    with token_lock:
-        if cached_token is None:
-            res = client.post(
-                "/api/auth/login",
-                json={"username": USERNAME, "password": PASSWORD}
-            )
-            if res.status_code == 200:
-                cached_token = res.json()["data"]["access_token"]
-        return cached_token
-
-
 class ApiUser(HttpUser):
     wait_time = between(0.01, 0.05)  # thời gian chờ giữa các request
 
@@ -31,7 +12,14 @@ class ApiUser(HttpUser):
         """
         Gọi khi user bắt đầu: đăng nhập và lưu JWT
         """
-        self.token = get_global_token(self.client)
+        response = self.client.post(
+            "/api/auth/login",  # endpoint login của bạn
+            json={"username": USERNAME, "password": PASSWORD}
+        )
+        if response.status_code == 200:
+            self.token = response.json()['data']['access_token']  # token JWT
+        else:
+            self.token = None
 
     @task
     def call_protected_api(self):
