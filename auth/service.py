@@ -19,7 +19,7 @@ from core.exceptions.session_exception import SessionException, SessionInactive,
 from session.models import Session
 from user_provider.models import UserProvider
 from services.oauth import oauth, cfg
-
+from utils.query_builder import QueryBuilder
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -150,8 +150,8 @@ class AuthService:
             raise SessionException('Session not found')
 
         except SessionException as e:
-            cls._revoke_session(session, note='revoked due to session error')
-            print('e', type(e))
+            query_builder = QueryBuilder().add_condition("session_id", session_id)
+            cls._revoke_session(query_builder, str(e))
             raise e
 
         # except TransactionException as e:
@@ -162,7 +162,8 @@ class AuthService:
         return session
 
     @classmethod
-    def generate_token(cls, user: User, session: Session):
+    def generate_token(cls, user: User, session: Session = None):
+        session = session or cls._create_session({"user":user})
         payload = PayloadToken(
             session_id=session.session_id,
             email=user.email,
@@ -179,7 +180,7 @@ class AuthService:
     @classmethod
     def _create_user_provider(cls, user_dict) -> UserProvider:
         try:
-            user = cls.repository_provider.create(user_dict)
+            user = cls.repository_provider.create(**user_dict)
             return user
         except Exception as e:
             raise e
@@ -197,14 +198,19 @@ class AuthService:
             print('Update user provider error', e)
             raise e
 
+
     @classmethod
-    def _revoke_session(cls, session: Session, note=None):
-        if not session:
-            return
-        session.is_active = False
-        session.revoked_at = datetime.now()
-        session.note = note
-        session.save()
+    def _revoke_session(cls, query_builder: QueryBuilder, note="revoked due to new login"):
+        Session.objects.filter(query_builder.build()).update(is_active=False, note=note, revoked_at=datetime.now())
+
+    # @classmethod
+    # def _revoke_session(cls, session: Session, note=None):
+    #     if not session:
+    #         return
+    #     session.is_active = False
+    #     session.revoked_at = datetime.now()
+    #     session.note = note
+    #     session.save()
 
 
     @classmethod
@@ -214,8 +220,11 @@ class AuthService:
             raise AuthenticationFailed('Invalid username or password')
         login(request, user)
 
-        old_session = Session.objects.filter(user=user, is_active=True).first()
-        cls._revoke_session(session=old_session, note='revoked due to new login')
+        query_builder = QueryBuilder().add_condition("user", user).add_condition("is_active", True)
+        cls._revoke_session(query_builder)
+
+        # other_session = Session.objects.filter(user=user, is_active=True).first()
+        # cls._revoke_session(session=other_session, note='revoked due to new login')
 
         session = cls._create_session({"user":user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
 
@@ -223,13 +232,13 @@ class AuthService:
 
     @classmethod
     def provider_onboard_process(cls, provider_name, request):
-        provider_class = cls.get_provider(provider_name)
-        provider = provider_class()
+        Provider = cls.get_provider(provider_name)
+        instance_provider = Provider()
 
-        token = provider.get_token(request)
+        token = instance_provider.get_token(request)
         print('token', token)
-        provider_in = provider.get_user_provider(token)
+        provider_in = instance_provider.get_user_provider(token)
 
         user = cls.upsert(provider_in)
-        session = cls._create_session({"user":user, "user_agent":request.META.get("HTTP_USER_AGENT", "")})
-        return cls.generate_token(user, session=session)
+
+        return cls.generate_token(user)

@@ -9,18 +9,19 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mymoney
+      POSTGRES_DB: postgres
       CONN_MAX_AGE: 0
     volumes:
       - pg_data:/var/lib/postgresql/data
-#    networks:
-#      - backend
+    networks:
+      - backend
 
 
   pgbouncer:
     container_name: pgbouncer
     ### build from source
     image: edoburu/pgbouncer
+#    command: postgres -c 'max_connections=250'
       # args:
       #   VERSION: 1.24.1
     ### download from dockerhub
@@ -31,9 +32,12 @@ services:
       DB_HOST: postgres
       DB_NAME: postgres
       POOL_MODE: transaction
-      MAX_CLIENT_CONN: 200
-      DEFAULT_POOL_SIZE: 20
+      LISTEN_PORT: 6432
+      MAX_CLIENT_CONN: 5000
+      DEFAULT_POOL_SIZE: 100
       AUTH_TYPE: scram-sha-256
+      MIN_POOL_SIZE: 20
+      RESERVE_POOL_SIZE: 20
 #      - DB_USER=postgres
 #      - DB_PASSWORD=postgres
 #      - DB_HOST=postgres
@@ -45,16 +49,36 @@ services:
 #      - VERBOSE=0
     volumes:
       - ./logs:/var/log/pgbouncer
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
     ports:
       - "6432:6432"
     depends_on:
       - postgres
-#    networks:
-#      - backend
+    networks:
+      - backend
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+
+  redis-insight:
+    container_name: redis-insight
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    networks:
+      - backend
 
 volumes:
   pg_data:
 #
-#networks:
-#  backend:
-#    driver: bridge
+networks:
+  backend:
+    driver: bridge
