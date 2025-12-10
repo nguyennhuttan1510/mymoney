@@ -80,6 +80,39 @@ class GoogleProvider(ProviderAccountAbstract):
         )
 
 
+class AuthAbstract(ABC):
+    @abstractmethod
+    def upsert(self):
+        pass
+
+    @abstractmethod
+    def validate(self):
+        pass
+
+    @abstractmethod
+    def login(self):
+        pass
+
+    @abstractmethod
+    def logout(self):
+        pass
+
+    @classmethod
+    def generate_token(cls, user, session: Session):
+        payload = PayloadToken(
+            session_id=session.session_id,
+            email=user.email,
+        )
+        serialized = CustomTokenObtainPairSerializer()
+        refresh_token = serialized.get_token(user, payload)
+        return  {
+            "refresh_token": str(refresh_token),
+            "access_token": str(refresh_token.access_token)
+        }
+
+
+
+
 class AuthService:
     repository_provider = UserProviderRepository()
 
@@ -133,13 +166,15 @@ class AuthService:
         return cls._create_user(payload)
 
     @classmethod
-    def validate_session(cls, session_id: str) -> Session:
-        session = None
+    def validate_session(cls, session_id: str, user) -> Session:
         if not session_id:
             raise SessionException('Session id is required')
 
         try:
             session_cached = cache.get(cls._create_session_key(user, session_id))
+            if not session_cached:
+                raise SessionException('Not found session in cache')
+
             if not session_cached["is_active"]:
                 raise SessionInactive()
 

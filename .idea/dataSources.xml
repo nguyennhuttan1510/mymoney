@@ -25,11 +25,11 @@
         </library>
       </libraries>
     </data-source>
-    <data-source source="LOCAL" name="postgres@192.168.1.3" uuid="3cebcd10-d878-41fd-90da-7043874ae4c1">
+    <data-source source="LOCAL" name="postgres@192.168.1.6" uuid="3cebcd10-d878-41fd-90da-7043874ae4c1">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://192.168.1.3:5432/postgres</jdbc-url>
+      <jdbc-url>jdbc:postgresql://192.168.208.1:5432/postgres</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

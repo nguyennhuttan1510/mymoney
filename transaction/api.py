@@ -26,8 +26,8 @@ def create_transaction(request, payload: TransactionIn):
 def get_all_transaction(request, query: Query[TransactionQuery]):
     try:
         result = TransactionService.search(params=query)
-        size_kb = len(result.model_dump_json().encode()) / 1024
-        print('Size:', size_kb, "KB")
+        # size_kb = len(result.model_dump_json().encode()) / 1024
+        # print('Size:', size_kb, "KB")
         return SuccessResponse(data=result,
                                message=f"Get all transactions of user {request.auth.pk} successfully")
     except Exception as e:

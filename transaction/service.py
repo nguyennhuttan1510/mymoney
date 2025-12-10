@@ -1,8 +1,11 @@
+import json
 from typing import Literal, List
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction as transaction_db
 from django.db.models import Sum, QuerySet
+from pydantic.config import JsonEncoder
 
 from budget.models import Budget
 from budget.repository import BudgetRepository
@@ -88,13 +91,13 @@ class TransactionService(ServiceAbstract):
     def search(cls, params: TransactionQuery) -> TransactionListOut:
 
         key = make_cache_key("transactions_search", params.model_dump(exclude_none=True))
-        data = cache.get(key)
-        if data:
-            return TransactionListOut(transactions=list(data), total=0)
+        cached = cache.get(key)
+        if cached:
+            return TransactionListOut(transactions=list(json.loads(cached)), total=0)
 
         qs = cls.repository.get_all_for_user(params=params)
-        total = cls.repository.sum_amount(qs)
+        # total = cls.repository.sum_amount(qs)
 
-        cache.set(key, list(qs), timeout=360)
+        cache.set(key, json.dumps(list(qs.values()), cls=DjangoJSONEncoder), timeout=360)
 
-        return TransactionListOut(transactions=list(qs), total=total)
+        return TransactionListOut(transactions=list(qs), total=0)
