@@ -127,7 +127,7 @@ DATABASES = {
         "NAME": "postgres",
         "USER": "postgres",
         "PASSWORD": "postgres",
-        "HOST": "192.168.1.6",
+        "HOST": "10.91.10.19",
         "PORT": "6432",
         "CONN_MAX_AGE": 0,
     }
@@ -140,7 +140,7 @@ CACHES = {
         # "OPTIONS": {
         #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
         # },
-        "KEY_PREFIX": "myapp"
+        "KEY_PREFIX": "my_money_bff"
     }
 }
 

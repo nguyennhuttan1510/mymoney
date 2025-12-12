@@ -1,12 +1,13 @@
+import uuid
 from abc import abstractmethod, ABC
 from datetime import datetime
-from typing import Dict, Type, Any
+from typing import Type, Any
 from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.core.cache import cache
-from django.db.models import QuerySet, Q
+from django.db.models import Q
 from django.utils import timezone
 
 from django.contrib.auth.models import User
@@ -17,10 +18,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from auth.repository import UserProviderRepository
 from auth.schema import UserProviderIn, Token, PayloadToken, UserIn
-from core.cache.redis import redis_client as r
 from core.exceptions.exceptions import BadRequest
 from core.exceptions.session_exception import SessionException, SessionInactive, SessionInvalid, SessionExpired
 from session.models import Session
+from session.service import SessionService
 from user_provider.models import UserProvider
 from services.oauth import oauth, cfg
 from utils.query_builder import QueryBuilder
@@ -115,7 +116,6 @@ class AuthAbstract(ABC):
 
 class AuthService:
     repository_provider = UserProviderRepository()
-
     @classmethod
     def get_provider(cls, provider) -> Type[ProviderAccountAbstract]:
         _providers = {
@@ -166,36 +166,37 @@ class AuthService:
         return cls._create_user(payload)
 
     @classmethod
-    def validate_session(cls, session_id: str, user) -> Session:
-        if not session_id:
-            raise SessionException('Session id is required')
-
-        try:
-            session_cached = cache.get(cls._create_session_key(user, session_id))
-            if not session_cached:
-                raise SessionException('Not found session in cache')
-
-            if not session_cached["is_active"]:
-                raise SessionInactive()
-
-            if not session_cached['expires_at']:
-                raise SessionInvalid('Session not found expired_at')
-
-            if parse_datetime(session_cached['expires_at']) <= timezone.now():
-                raise SessionExpired()
-
-
-        except SessionException as e:
-            query_builder = QueryBuilder().add_condition("session_id", session_id)
-            cls._revoke_session(query_builder, str(e))
-            raise e
-
-        return session_cached
+    def validate_session(cls, session_id: str, user):
+        return SessionService.validate_session(user_id=user.pk, session_id=session_id)
+        # if not session_id:
+        #     raise SessionException('Session id is required')
+        #
+        # try:
+        #     session_cached = cache.get(cls._make_session_key(user, session_id))
+        #     if not session_cached:
+        #         raise SessionException('Not found session in cache')
+        #
+        #     if not session_cached["is_active"]:
+        #         raise SessionInactive()
+        #
+        #     if not session_cached['expires_at']:
+        #         raise SessionInvalid('Session not found expired_at')
+        #
+        #     if parse_datetime(session_cached['expires_at']) <= timezone.now():
+        #         raise SessionExpired()
+        #
+        #
+        # except SessionException as e:
+        #     query_builder = QueryBuilder().add_condition("session_id", session_id)
+        #     cls._revoke_session(query_builder, str(e))
+        #     raise e
+        #
+        # return session_cached
 
     @classmethod
-    def generate_token(cls, user: User, session: Session):
+    def generate_token(cls, user: User, session_id: uuid.UUID):
         payload = PayloadToken(
-            session_id=session.session_id,
+            session_id=session_id,
             email=user.email,
         )
 
@@ -235,7 +236,7 @@ class AuthService:
 
 
     @classmethod
-    def _create_session_key(cls, user, session_id):
+    def _make_session_key(cls, user, session_id):
         return f"session:{user.id}:{session_id}"
 
     @classmethod
@@ -251,15 +252,15 @@ class AuthService:
     def _revoke_cache_session(cls, keys):
         cache.delete_many(keys)
 
-    @classmethod
-    def _delete_pattern(cls, pattern):
-        cursor = 0
-        while True:
-            cursor, keys = r.scan(cursor=cursor, match=f"myapp:1:{pattern}", count=2000)
-            if keys:
-                r.unlink(*keys)  # non-blocking delete
-            if cursor == 0:
-                break
+    # @classmethod
+    # def _delete_pattern(cls, pattern):
+    #     cursor = 0
+    #     while True:
+    #         cursor, keys = r.scan(cursor=cursor, match=f"myapp:1:{pattern}", count=2000)
+    #         if keys:
+    #             r.unlink(*keys)  # non-blocking delete
+    #         if cursor == 0:
+    #             break
 
     @classmethod
     def login_process(cls, payload, request):
@@ -269,19 +270,24 @@ class AuthService:
             raise AuthenticationFailed('Invalid username or password')
         login(request, user)
 
+        # remove all session of user
+        SessionService.delete_all_session(user_id=user.pk)
+        # create session
+        session_id = SessionService.create_session(user_id=user.pk, request=request)
+
         #Step 2: Check session existing and disabled
-        query_builder = QueryBuilder().add_condition("user", user).add_condition("is_active", True)
-        cls._revoke_session(query_builder)
-        cls._delete_pattern(f"session:{user.id}:*")
+        # query_builder = QueryBuilder().add_condition("user", user).add_condition("is_active", True)
+        # cls._revoke_session(query_builder)
+        # cls._delete_pattern(f"session:{user.id}:*")
 
-        #Step 3: Create new session
-        session = cls._create_session({"user": user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
+        # #Step 3: Create new session
+        # session = cls._create_session({"user": user, "user_agent": request.META.get("HTTP_USER_AGENT", "")})
+        #
+        # #Step 4: Cache
+        # session_key = cls._make_session_key(user, str(session.session_id))
+        # cls._cache_session(session_key, session)
 
-        #Step 4: Cache
-        session_key = cls._create_session_key(user, str(session.session_id))
-        cls._cache_session(session_key, session)
-
-        return cls.generate_token(user, session=session)
+        return cls.generate_token(user, session_id=session_id)
 
     @classmethod
     def provider_onboard_process(cls, provider_name, request):
@@ -294,4 +300,4 @@ class AuthService:
 
         user = cls.upsert(provider_in)
         session = cls._create_session({"user":user, "user_agent":request.META.get("HTTP_USER_AGENT", "")})
-        return cls.generate_token(user, session=session)
+        return cls.generate_token(user, session_id=session.session_id)

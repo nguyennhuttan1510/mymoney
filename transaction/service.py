@@ -1,5 +1,5 @@
 import json
-from typing import Literal, List
+from typing import Literal, List, Dict, Any
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
@@ -9,6 +9,8 @@ from pydantic.config import JsonEncoder
 
 from budget.models import Budget
 from budget.repository import BudgetRepository
+from core.cache.key_generator import KeyHashing
+from core.cache.redis import RedisCache, RedisSingleton
 from core.exceptions.exceptions import BadRequest
 from category.models import Category
 from core.schema.service_abstract import ServiceAbstract
@@ -46,15 +48,19 @@ class Validator:
             raise ObjectDoesNotExist("Transaction does not exist.")
 
 
+class CachingTransaction(RedisCache):
+    def __init__(self, prefix: str = "transactions_search"):
+        super().__init__()
+        self.prefix = prefix
+        self.key = KeyHashing(prefix)
+
+    def make_key(self, params):
+        return self.key.generate(params)
+
+
 class TransactionService(ServiceAbstract):
     repository = TransactionRepository()
-
-    @classmethod
-    def process(cls, payload: TransactionIn | TransactionUpdateSchema, user: User, action: Literal['create' , 'update'], transaction_id: int = None) -> Transaction:
-        if action == 'create':
-            return cls._create_transaction(payload=payload, user=user)
-        else:
-            return cls._update_transaction(transaction_id=transaction_id, user=user, data=payload)
+    cache = CachingTransaction()
 
     @classmethod
     def destroy(cls, transaction_id: int, user:User) -> Transaction:
@@ -65,7 +71,7 @@ class TransactionService(ServiceAbstract):
         return transaction
 
     @classmethod
-    def _create_transaction(cls, payload: TransactionIn, user):
+    def create(cls, payload: TransactionIn, user):
         wallet = Validator.get_wallet(wallet_id=payload.wallet)
         category = Validator.get_category(category_id=payload.category)
 
@@ -75,7 +81,7 @@ class TransactionService(ServiceAbstract):
             return transaction
 
     @classmethod
-    def _update_transaction(cls, transaction_id: int, data:TransactionUpdateSchema, user: User) -> Transaction:
+    def update(cls, transaction_id: int, data:TransactionUpdateSchema, user: User) -> Transaction:
         transaction = Validator.get_transaction(transaction_id)
         wallet = Validator.get_wallet(wallet_id=data.wallet_id)
         category = Validator.get_category(category_id=data.category_id)
@@ -89,15 +95,11 @@ class TransactionService(ServiceAbstract):
 
     @classmethod
     def search(cls, params: TransactionQuery) -> TransactionListOut:
+        key = cls.cache.make_key(params.model_dump(exclude_none=True))
+        def fetch():
+            qs = cls.repository.get_all_for_user(params=params)
+            return list(qs.values())
+        data = cls.cache.get_or_set(key, ttl=360, fetch=fetch)
 
-        key = make_cache_key("transactions_search", params.model_dump(exclude_none=True))
-        cached = cache.get(key)
-        if cached:
-            return TransactionListOut(transactions=list(json.loads(cached)), total=0)
-
-        qs = cls.repository.get_all_for_user(params=params)
         # total = cls.repository.sum_amount(qs)
-
-        cache.set(key, json.dumps(list(qs.values()), cls=DjangoJSONEncoder), timeout=360)
-
-        return TransactionListOut(transactions=list(qs), total=0)
+        return TransactionListOut(transactions=list(data), total=0)

@@ -16,7 +16,7 @@ router = Router(tags=['Transaction'], auth=JWTAuth())
 def create_transaction(request, payload: TransactionIn):
     try:
         user = getattr(request, 'auth', None)
-        transaction = TransactionService.process(action='create', payload=payload, user=user)
+        transaction = TransactionService.create(payload=payload, user=user)
         return CreateSuccessResponse(data=transaction, message='Created transaction successfully')
     except Exception as e:
         return BadRequestResponse(message=f'Create failed - {str(e)}')
@@ -47,8 +47,8 @@ def get_transaction(request, transaction_id: int):
 def update_transaction(request, transaction_id: int, payload: TransactionUpdateSchema):
     try:
         user = getattr(request, 'auth', None)
-        transaction_updated = TransactionService.process(action='update', transaction_id=transaction_id,
-                                                         payload=payload, user=user)
+        transaction_updated = TransactionService.update(transaction_id=transaction_id,
+                                                        data=payload, user=user)
         return SuccessResponse(data=transaction_updated,
                                message=f"Updated transactions {transaction_id} of user {user.pk} successfully")
     except Exception as e:

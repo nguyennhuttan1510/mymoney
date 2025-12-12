@@ -18,6 +18,8 @@ class Session(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_active = models.DateTimeField(auto_now=True)
 
+    objects = models.Manager()
+
     class Meta:
         indexes = [
             models.Index(fields=["user", "is_active"]),
